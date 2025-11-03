@@ -4,8 +4,8 @@
 <head>
   <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="/config.js"></script>
-<script src="/batch2.js"></script>
+<script src="../config.js"></script>
+<script src="../batch2.js"></script>
 
   <title>Teach and Sign</title>
   
@@ -160,6 +160,18 @@ let teachersRef = doc(db, schoolId, "teachers");
   let sectionRef = doc(db, schoolId, "section");
   let sectionDoc = await getDoc(sectionRef);
   const attendance = {};
+
+const user = await new Promise(resolve=> onAuthStateChanged(auth, user=>resolve(user)));
+ let headId = user.email.replace(/@.*/, "");
+
+  
+    //let sessionsRef = doc(db, schoolId, "session
+const teachers = teachersDoc.data();
+  console.log(headId);
+  const head = teachers[headId];
+console.log(headId);
+  const rclasses = head.adminFunctions.monTAS.resources;
+  
   
 function getDate(){
   let d = new Date();
@@ -189,20 +201,17 @@ function getDate(){
   }
   
     
- if (sectionDoc.exists()){
-   let sections = sectionDoc.data();
-     
-   let keys = Object.keys(sections);
+ 
    
-   keys.forEach(key=>{
-       let optG = document.createElement("optgroup");
-       optG.label = key;
-       let classes = sections[key].classes;
-       classes.forEach(clas=>optG.innerHTML +=`<option>${clas}</option>`);
-       classSelect.append(optG);
-   });
+  // keys.forEach(key=>{
+    //   let optG = document.createElement("optgroup");
+      // optG.label = key;
+       let classes = rclasses;
+       classes.forEach(clas=>classSelect.innerHTML +=`<option>${clas}</option>`);
+       //classSelect.append(optG);
+   //});
 
- }
+ 
  
 
   

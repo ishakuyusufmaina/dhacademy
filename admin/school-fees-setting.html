@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="../config.js"></script>
+ <script src="../batch2.js"></script>
+
   <title>School Fees Manager</title>
   <style>
     body {
@@ -135,9 +138,7 @@
     <button id="setBtn" class="button-primary">Set</button>
   </div>
 
-  <script src="/config.js"></script>
-  <script src="/batch2.js"></script>
-  
+ 
     <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
@@ -241,33 +242,6 @@ var session;
         const controls = document.createElement("div");
         controls.className = "controls";
 
-      /*  const saveBtn = document.createElement("button");
-        saveBtn.textContent = "Save";
-        saveBtn.onclick = () => {
-          alert("A set school fee cannot be changed!");
-          return;
-          const newName = sectionInput.value.trim();
-          const newFee = parseInt(feeInput.value);
-          if (!newName || isNaN(newFee)) return alert("Invalid input.");
-          if (newName !== section) delete schoolFee[section];
-          schoolFee[newName] = newFee;
-          renderFees();
-        };
-       */
-
-     /*   const deleteBtn = document.createElement("button");
-        deleteBtn.textContent = "Delete";
-        deleteBtn.className = "delete";
-        deleteBtn.onclick = () => {
-          alert("A set school fee cannot be deleted!");
-          return;
-          delete schoolFee[section];
-          renderFees();
-        };
-        */
-
-     //   controls.appendChild(saveBtn);
-   //     controls.appendChild(deleteBtn);
 
         item.appendChild(sectionInput);
         item.appendChild(feeInput);

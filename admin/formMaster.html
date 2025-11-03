@@ -4,8 +4,8 @@
 <head>
     <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="/config.js"></script>
-    <script src="/batch2.js"></script>
+<script src="../config.js"></script>
+    <script src="../batch2.js"></script>
 
   <title>Attendance</title>
   <style>
@@ -173,12 +173,12 @@ details ol li::before {
 
 <body>
   <h1>
-    Form masters
+    Form Masters/Class Teachers
   </h1>
   <table>
     <tr>
       <th>Class</th>
-      <th>Form master</th>
+      <th>Form master/Class Teacher</th>
     </tr>
     
     <tbody id="table">
@@ -212,14 +212,21 @@ details ol li::before {
   let teacherDoc = await getDoc(doc(db, schoolId, "teachers"));
   let teachers = teacherDoc.exists()? teacherDoc.data() : {};
   let sectionDoc = await getDoc(doc(db, schoolId, "section"));
+  let user = await new Promise(resolve=>{
+    onAuthStateChanged(auth, u=>{   
+      let id = u.email.replace(/@.*/, "");
+      let teacher = teachers[id];
+      return resolve(teacher);
+    })
+  });
+  
+   let relFxn = user.adminFunctions.fm;
+  
   if (sectionDoc.exists()){
     let sections = sectionDoc.data();
     let sectKeys = Object.keys(sections).sort();
-    for (let i = 0; i< sectKeys.length; i++){
-      let section = sectKeys[i];
-      let classes = sections[section].classes.sort();
-      
-      classes.forEach(clas=>{
+     
+      relFxn.resources.forEach(clas=>{
         let row = table.insertRow();
         let td = row.insertCell();
         td.innerHTML = clas;
@@ -263,6 +270,8 @@ details ol li::before {
             if (!username) return;
             let index = teachers[username].role.fm.indexOf(clas);
             teachers[username].role.fm.splice(index, 1);
+            //teachers[username].adminFunctions.students??={resources: []};
+           
          
           }
         }
@@ -270,7 +279,7 @@ details ol li::before {
         tchListD.append(details);
         
       })
-    }
+    
   }
   
   save.onclick = async e=>{

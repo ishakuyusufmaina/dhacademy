@@ -81,6 +81,12 @@
     text-align: left;
     vertical-align: middle;
   }
+  .resource{
+    border: 1px solid #e0e0e0;
+    padding: 0.8rem;
+    text-align: left;
+    vertical-align: middle;
+  }
 
   td label {
     font-weight: 500;
@@ -189,28 +195,116 @@
       const auth = getAuth(app);
     const db = getFirestore(app);
   
-//  const schoolId = "alhidayah";
+  const schoolId = "innovative";
   let teacherDoc = await getDoc(doc(db, schoolId, "teachers"));
   let teachers = teacherDoc.exists()? teacherDoc.data() : {};
   let sectionDoc = await getDoc(doc(db, schoolId, "section"));
+  let sects = sectionDoc.exists()? Object.keys(sectionDoc.data()) : [];
+  const rolesRef = doc(db, schoolId, "roles");
+  let rolesDoc = await getDoc(rolesRef);
+  let roles = rolesDoc.exists()? rolesDoc.data().list : [];
   
+  let user = await new Promise(resolve=>{
+    onAuthStateChanged(auth, u=>resolve(u))
+  });
+ let id = user.email.replace(/@.*/, "");
+  const teacher = teachers[id];
   
+  console.log(sects);
+  let classes = [];
+  if (id!==schoolId) sects = teacher.adminFunctions.admins.resources;  
+  sects.forEach(sect=>{
+    let section = sectionDoc.data()[sect];
+    classes = classes.concat(section.classes);
+  }) 
+  /*
+  t.adminFxns = {
+      
+  }
+  */
+  /*
+  using the first, teachers, as an example.
+  teachers is implicitly lower resources,
+  and resources are the upper resources 
+  containing the lower resource.
+  */
   const adminFunctions = {
-    teachers: "Manage teachers",
-    students: "Manage students",
-    rc: "Manage report cards",
-    admins: "Manage admins",
-    fm: "Assign form master",
-    session: "Launch academic session",
-    section: "Manage school sections",
-    subjects: "Manage school subjects",
-    auth: "Authorize teach and sign",
-    monTAS: "Monitor teach and sign",
-    monSA: "Monitor Student Attendance",
-    feesSet: "Fix School Fees",
-    feesRecord: "Record School Fees",
-    feesView: "View School Fees",
-    feesDefaulter: "Check School Fees Defaulters"
+    teachers: {
+      action: "Manage teachers",
+      resources: sects
+    },  
+    students: {
+      action: "Manage students",
+      resources: classes
+    },
+    rc: {
+      action: "Manage report cards",
+      resources: classes
+    },
+    admins: {
+      action: "Manage admins",
+      resources: sects
+    },
+    fm: {
+      action: "Assign form master",
+      resources: classes
+    },
+    session: {
+      action: "Launch academic session",      
+    },
+    section: {
+      action: "Manage school sections",
+      resources: sects
+    },
+    subjects: {
+      action: "Manage school subjects",
+      resources: sects
+    },
+    auth: {
+      action: "Authorize teach and sign",
+      resources: classes
+    },
+    monTAS: {
+      action: "Monitor teach and sign",
+      resources: classes
+    },
+    monSA: {
+      action: "Monitor Student Attendance",
+      resources: classes
+    },
+    feesSet: {
+      action: "Fix School Fees"
+    },
+    feesRecord: {
+      action: "Record School Fees",
+      resources: sects
+    },
+    feesView: {
+      action: "View School Fees"      
+    },
+    feesDefaulter: {
+      action: "Check School Fees Defaulters",
+      resources: classes
+    },
+    scoresheetConfig: {
+      action: "Configure Scoresheet",
+      resources: sects
+    },
+    rcConfig: {
+      action: "Configure Report Card",
+      resources: sects
+    },
+    otherFees: {
+      action: "Set other fees"
+    },
+    managePsycho: {
+      action: "Manage psychometrics",
+      resources: sects
+    },
+    roles: {
+      action: "Manage Roles"
+    }
+    
   };
   
   
@@ -224,6 +318,10 @@
   let teacherList = [];
   for (const username in teachers){
     let teacher = teachers[username];
+    let tSects = teacher.sections??[];
+    let intersects = tSects.filter(sect=>sects.includes(sect));
+    console.log(intersects);
+    if (!intersects.length && id!==schoolId) continue;
     teacherList.push(teacher);
     if (teacher.isAdmin){
       presentAdmin(teacher);
@@ -233,51 +331,84 @@
   function presentAdmin(admin){
     let teacher = admin;
     let name= teacher.name;
-      let adminFxns = teacher.adminFunctions;
+    let adminFxns = Object.keys(teacher.adminFunctions);
     let details = document.createElement("details");
     let summary = document.createElement("summary");
-    summary.innerHTML = name + " can ..";
-    
-      let tb = document.createElement("table");
+    let tb = document.createElement("table");
+    details.append(summary, tb);
+    admins.append(details);
+    render();
+    function render(){
+      summary.innerHTML = name + " is <select multiple></select>" + " and can ..";
+      let roleSelect = summary.querySelector("select");
+      teacher.roles??=[];
+      roles.forEach(role=>{
+        let opt = new Option(role);
+        roleSelect.append(opt);
+        opt.selected = teacher.roles.includes(role);
+      })
+      roleSelect.onchange = e=>{
+        teacher.roles = Array.from(roleSelect.selectedOptions).map(opt=>opt.value);
+        console.log(teacher.roles);
+      }
+      tb.innerHTML = "";
       let supFxns = Array.from(Object.keys(adminFunctions));
-    adminFxns.forEach((fxn, i)=>{
-      let id = `${teacher.username}${fxn.replaceAll(" ","")}${i}`;
+
+      supFxns.forEach((fx, i)=>{
+        let admFx = teacher.adminFunctions??{};
+        let id = `${teacher.username}${fx.replaceAll(" ","")}${i}no`;
         let row = tb.insertRow();
         let tdFx = row.insertCell();
         let tdCan = row.insertCell();
-        tdFx.innerHTML = `<label for="${id}">${adminFunctions[fxn]}</label>`;
-        tdCan.innerHTML = `<input id="${id}" type="checkbox" checked value="${fxn}">`;
-        let index = supFxns.indexOf(fxn);
-        supFxns.splice(index, 1);
-      
-      tdCan.querySelector("input").onchange = e=>{
-                if (e.target.checked){
-          teacher.isAdmin = true;
-          teacher.adminFunctions.push(fx);
-        }
-      }
+        let {resources, action}  = adminFunctions[fx];
+        if (!resources && id!==schoolId) return;
+        tdFx.innerHTML = `<input id="${id}" type="checkbox" value="${fx}"> <label for="${id}">${action}</label>`;
         
-      });
-    supFxns.forEach((fx, i)=>{
-      let id = `${teacher.username}${fx.replaceAll(" ","")}${i}no`;
-      let row = tb.insertRow();
-        let tdFx = row.insertCell();
-        let tdCan = row.insertCell();
-        tdFx.innerHTML = `<label for="${id}">${adminFunctions[fx]}</label>`;
-        tdCan.innerHTML = `<input id="${id}" type="checkbox" value="${fx}">`;
-      tdCan.querySelector("input").onchange = e=>{
-        if (e.target.checked){
-          teacher.isAdmin = true;
-          teacher.adminFunctions.push(fx);
+        if (admFx[fx] && resources) resources.forEach(res=>{
+          let resElm = document.createElement("div");
+          resElm.classList.add("resource");
+          resElm.innerHTML = `<div>
+          <input id="${id+res}" type="checkbox" value="${res}">
+          <label for="${id+res}">${res}</label>
+          </div>
+          `;
+          tdCan.append(resElm);
+          let resIn = resElm.querySelector("input");
+          let ress = teacher.adminFunctions[fx].resources??[];
+          resIn.checked = ress.includes(resIn.value);
+          resIn.onchange = e=>{
+              if (e.target.checked){
+                teacher.adminFunctions[fx].resources??=[];
+                teacher.adminFunctions[fx].resources.push(resIn.value)
+                console.log(fx, resIn.value);
+              } else {
+                let i = teacher.adminFunctions[fx].resources.indexOf(resIn.value);
+                teacher.adminFunctions[fx].resources.splice(i, 1);
+              }
+            }
+        })
+        let actIn = tdFx.querySelector("input");
+        actIn.checked = !!admFx[fx];
+     
+        
+        actIn.onchange = e=>{
+          if (e.target.checked){
+            teacher.isAdmin = true;
+            teacher.adminFunctions??= {};
+            teacher.adminFunctions[fx] = {action}
+            console.log(fx, action);
+            
+          } else {
+            delete teacher.adminFunctions[fx]
+          }
+          render();
         }
-      }
-    })
-    details.append(summary, tb);
-    admins.append(details);
-    
-    
-   }
+      })
+    } //end of render fx
+  }
   //let list = ["ux11 ma", "u12 xa", "ux t 3"];
+  
+  
   teacherList.forEach(teacher =>{
     if (teacher.isAdmin) return;
     let row = table.insertRow();
@@ -290,7 +421,7 @@
      btn.onclick = e=>{
        row.remove();
        teacher.isAdmin = true;
-       teacher.adminFunctions = [];
+       teacher.adminFunctions = {};
        presentAdmin(teacher);
      }
     // table.innerHTML +=`<tr><td>${teacher.name}</td> <td><button>add</button></td></tr>`;
@@ -313,7 +444,7 @@
        let teacher = list;
        row.remove();
        teacher.isAdmin = true;
-       teacher.adminFunctions = [];
+       teacher.adminFunctions = {};
        presentAdmin(teacher);
    
      }

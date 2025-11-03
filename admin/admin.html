@@ -29,7 +29,7 @@
   //  display: flex;
     justify-content: space-between;
     align-items: center;
-   background: #0078D7;
+   background: #b12449;
   //  background: #800000;
     color: #fff;
     padding: 15px 20px;
@@ -243,6 +243,14 @@ z-index: 102;
     user-select: none;
     z-order: 0;
   }
+  
+  .fx {
+    display: none;
+  }
+  
+  .card > .card {
+    margin: 2px;
+  }
 </style>
 
 
@@ -268,22 +276,22 @@ z-index: 102;
     <hr>
   </header>
   <main id="main" style="display:none">
-  <h1>Admin  </h1>
+  <h1 id="h1">Admin  </h1>
     
     <div class="card-container">
-    <div class="card auth">
+    <div class="card fx auth">
       Authorization code: <span id="code"></span>
       <button id="generate">Generate new</button>
       <button id="save" style="display:none">Save</button>
       
     </div>
 
-      <div class="card monTAS">
+      <div class="card fx monTAS">
         <h2>Teach and Sign</h2>
         <a href="teachAndLog.html">Monitor Teach and Sign</a>
       </div>
       
-    <div class="card monSA">
+    <div class="card fx monSA">
       <h2>Student Attendace</h2>
       <a href="stdAttendance.html">Monitor Student Attendance</a>
     </div>
@@ -291,80 +299,90 @@ z-index: 102;
        
       
     
-    <div class="card rc">
+    <div class="card">
       <h2>Academic Performance</h2>
-      <a href="reportCards.html">Report Cards</a>
-      <a href="reportOverview.html">Overview</a>
-     
+      <div class="card fx rc">
+        <a href="reportCards.html">Report Cards</a>
+        <a href="reportOverview.html">Overview</a>
+      </div>
+      <div class="card fx rcConfig">
+       <a href="rc/configuration.html">Report Card Configuration</a>
+      </div>
+      <div class="card fx scoresheetConfig">
+       <a href="rc/scoreSheetConfig.html">Scoresheet Configuration</a>
+      </div>
+      <div class="card fx managePsycho">
+       <a href="define-psycho.html">Manage Psychometrics</a>
+      </div>
     </div>
       
-    
+   
 
-    <div class="card session">
+    <div class="card fx session">
       <h2>Academic Session</h2>
       <a href="session.html">Manage Session</a>
     </div>
 
-    <div class="card section">
+    <div class="card fx section">
       <h2>School Sections</h2>
       <a href="section.html">Manage Sections</a>
     </div>
 
-    <div class="card subjects">
-      <h2>Subjects</h2>
-      <a href="subjects.html">Manage Subjects</a>
+    <div class="card fx subjects">
+      <h2>Subjects Management</h2>
+      <div class="card">
+        <a href="subjects.html">Subjects</a>
+      </div>
+      <div class="card">
+        <a href="rbsd.html">Differential Subjects</a>
+    </div>
     </div>
 
-    <div class="card teachers">
+    <div class="card fx teachers">
       <h2>Teachers</h2>
       <a href="teachers.html">Manage Teachers</a>
     </div>
 
-    <div class="card students">
+    <div class="card fx students">
       <h2>Students</h2>
       <a href="class.html">Manage Students</a>
     </div>
 
-    <div class="card fm">
+    <div class="card fx fm">
       <h2>Form Masters</h2>
       <a href="formMaster.html">Assign Form Masters</a>
     </div>
+     
+     <div class="card fx roles">
+      <h2>Roles</h2>
+      <a href="manageRole.html">Manage Roles</a>
+     </div>
 
-    <div class="card admins">
+    <div class="card fx admins">
       <h2>Manage Admins</h2>
       <a href="manageAdmins.html">Admin Settings</a>
     </div>
 
-      <div class="card feesSet">
-      <h2>School Fees Setting</h2>
-      <a href="school-fees-setting.html">Fix School Fees</a>
-      </div>
-
-      <div class="card feesRecord">
-      <h2>Record School Fees</h2>
-      <a href="bursary/index.html">Record School Fees</a>
-      </div>
-
-      <div class="card feesView">
-      <h2>View School Fees</h2>
-      <a href="bursary/records.html">View School Fees</a>
-      </div>
-      
-    <div class="card feesDefaulter">
-      <h2>School Fees Defaulters</h2>
-      <a href="bursary/defaulter.html">Check Defaulters</a>
-      </div>
-      
-    <!--/div>
       <div class="card">
-      <h2>Fees Management</h2>
-      <p>[Work in Progress (20%)]</p>
-    </div-->
+        <h2>School Fees</h2>
+        <div class="card fx feesSet">
+          <a href="school-fees-setting.html">Fix School Fees</a>
+        </div>
+        <div class="card fx feesRecord">
+          <a href="bursary/index.html">Record School Fees</a>
+        </div>
+        <div class="card fx feesView">
+          <a href="bursary/records.html">View School Fees</a>
+        </div>
+        <div class="card fx feesDefaulter">
+          <a href="bursary/defaulter.html">Check School Fees Defaulters</a>
+        </div>
+        <div class="card fx otherFees">
+          <a href="bursary/custom-fees.html">Set Other Fees</a>
+        </div>
+      </div>
+      
 
-    <!--div class="card">
-      <h2>Parents</h2>
-      <p>(Coming soon)</p>
-    </div-->
 
   
 </main>
@@ -389,7 +407,7 @@ z-index: 102;
       const analytics = getAnalytics(app);
       const auth = getAuth(app);
     const db = getFirestore(app);
-//const schoolId= "alhidayah";
+const schoolId= "innovative";
   const terms = ["first term", "second term", "third term"];
   
    var sessions = [];
@@ -419,17 +437,22 @@ const adminFunctions = [
     "auth",
     "monTAS",
     "monSA",
-  "feesSet",
-  "feesRecord",
-  "feesView",
-  "feesDefaulter"
+    "feesSet",
+    "feesRecord",
+    "feesView",
+    "feesDefaulter",
+    "roles",
+    "rcConfig",
+    "scoresheetConfig",
+    "otherFees",
+    "managePsycho"
   ];
   
-adminFunctions.forEach(fx=>{
+/*adminFunctions.forEach(fx=>{
   let elm = document.querySelector("."+fx);
   if (elm) elm.style = "display: none;"
   
-})
+})*/
   let d = new Date();
   let year = d.getFullYear();
   let month = d.getMonth() + 1;
@@ -529,8 +552,20 @@ adminFunctions.forEach(fx=>{
     let id = user.email.replace(/@.*/, "");
     let teachers = teachersDoc.data();
     let teacher = teachers[id];
+    teacher.adminFunctions??={};
+    teacher.role??={};
+    h1.innerHTML = teacher.roles;
+    if (teacher.role.fm){
+      let classes = teacher.role.fm;
+      teacher.adminFunctions.students??={resources: classes};
+    }
  //   alert(teacher.adminFunctions);
-  teacher.adminFunctions.forEach(fx=>{
+  if (id==schoolId)
+  adminFunctions.forEach(fx=>{
+    let elm = document.querySelector("."+fx);
+    if (elm) elm.style = "display: block";
+  })
+  else Object.keys(teacher.adminFunctions).forEach(fx=>{
     let elm = document.querySelector("."+fx);
     if (elm) elm.style = "display: block";
   })

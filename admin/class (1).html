@@ -326,19 +326,12 @@ let sectionDoc = await getDoc(sectionRef);
         ${result.name.toUpperCase()}
       </td> 
       <td>
-         <select class="gender">
-            <option value=""> -select gender- </option>
-            <option value="female">Female</option>
-           <option value="male">Male</option>
-        </select>
+         
     
     </td>    
     <td>
-    <select class="religion" value="Islam">
-         <option value=""> -select religion- </option>
-         <option value="Islam">Muslim</option>
-         <option value="Christian">Christian</option>
-    </select>
+    Attention <input type="range" id="attentionRange" min="0" max="5" value="50" step="1" oninput="updateMeter()">
+
     </td>
     <!--td class="parent">
     ${parent? `<a href="parent/profile.html?pin=${parent.pin}">PIN:`+parent.pin+'<br>'+parent.name.toUpperCase()+"</a>"

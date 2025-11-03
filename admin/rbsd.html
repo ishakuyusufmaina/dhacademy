@@ -5,9 +5,9 @@
   <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="../config.js"></script>
-<script src="../batch2.js"></script>
+ <script src="../batch2.js"></script>
 
-  <title>Subject Reg</title>
+  <title>Section-based Subject Reg</title>
     <style>
   *{
     box-sizing: border-box;
@@ -109,26 +109,7 @@ button.delete:hover {
     Hello, World!
   </h1-->
   <select id="setSelect">
-    <!--optgroup label="Primary set">
-<option>Primary 1</option>
-<option>Primary 2</option>
-<option>Primary 3</option>
-<option>Primary 4</option>
-<option>Primary 6</option>
 
-    </optgroup>
-    <optgroup label="Junior set">
-      <option>JSS 1</option>
-      <option>JSS 2</option>
-      <option>JSS 3</option>
-
-    </optgroup>
-    <optgroup label="senior set">
-      <option>SS 1</option>
-<option>SS 2</option>
-<option>SS 3</option>
-
-    </optgroup-->
     <option value=""> -select set- </option>
     <!--option>Primary</option>
     <option>Junior</option>
@@ -137,7 +118,7 @@ button.delete:hover {
   <!--a href="#">View all</a-->
   <div class="table-container">
   <table>
-    <tr><th>Subject</th><th>Action</th></tr>
+    <tr><th>Subject</th><th>Offered to</th></tr>
     <tbody id="table"></tbody>
   </table>
 </div>
@@ -149,7 +130,7 @@ button.delete:hover {
   import {getFirestore, doc, setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
   import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
      // import {getDatabase, set, ref, onValue, child, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-  /*    const firebaseConfig = {
+   /*   const firebaseConfig = {
   apiKey: "AIzaSyCm_DSZaYVQCt0ubBwRkE9nOTryJayxH0w",
   authDomain: "school-in-the-box.firebaseapp.com",
   projectId: "school-in-the-box",
@@ -157,68 +138,74 @@ button.delete:hover {
   messagingSenderId: "596350496353",
   appId: "1:596350496353:web:84c66c351700ddf0824420",
   measurementId: "G-3MGCDH4FRF"
-}; */
+};
   
-//  const schoolId = "alhidayah";
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+  const schoolId = "capital";*/
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
+  let teachers = teachersDoc.data();
+  let sectionRef = doc(db, schoolId, "section");
+    let dataDoc = await getDoc(sectionRef);
+    let data = dataDoc.exists()? dataDoc.data() : {};
 
+  let user = await new Promise(async resolve=> onAuthStateChanged(auth, user=> resolve(user)));
+  let id = user.email.replace(/@.*/, "");
+  const teacher = teachers[id];
   
-  let data;
-    let sectionRef = doc(db, schoolId, "section");
-  let section = await getDoc(sectionRef);
-  let teachers = (await getDoc(doc(db, schoolId, "teachers"))).data();
-  let user = await new Promise(resol=>{
-    onAuthStateChanged(auth, u=>resol(u));
-  });
- let id = user.email.replace(/@.*/, "");
-
-  if (section.exists()){
-    data = section.data();
-    console.log(JSON.stringify(data));
-    for (const set in data){
-     // console.log(key);
-      if (!teachers[id].adminFunctions.subjects.resources.includes(set)) continue;
-      let opt = document.createElement("option");
-      opt.innerHTML = set;
-      setSelect.append(opt);
-    }
-  } else
-  data = {
-      //"primary": ["class 1", "class 2"],
-     // "junior": ["jss 1", "jss2", "jss 3"]
-    }
+  var srp; //subject religion profile
+  
+  let sections = Object.keys(data); //new Set(teacher.role.hos.sections);//JSON.parse(localStorage.getItem("sections"));
+  if (sections){
+     sections.forEach(set=>{
+       if (!teachers[id].adminFunctions.subjects.resources.includes(set)) return;
+       let opt = document.createElement("option");
+       opt.innerHTML = set.toUpperCase();
+       setSelect.append(opt);
+     })
+  } 
   
   function add(){
-    /*if (!set.value) return;
-    let subject = prompt("Subject: ");
-    if (subject){*/
     addRow("");
-         //}
+  
   }
   addBtn.onclick = e => add();
   function addRow(subject){
+    let subjFaith = srp[subject] ?? "";
     let row = document.createElement("tr");
       row.innerHTML = `
       <td><span class="subject" contenteditable>${subject}</span></td>
-      <td><button class="delete">remove</button></td>`;
+      <td>
+    <select class="rel">
+    <option value="">Both</option>
+    <option value="Muslim">Muslim</option>
+    <option value="Christian">Christian</option>
+    </select>
+    </td>`;
       table.appendChild(row);
-    row.querySelector(".delete").onclick=e=>{
-      row.remove();
+    if (subjFaith) 
+      row.querySelector(`select>option[value=${subjFaith}]`).selected = true;
+
+    row.querySelector(".rel").onchange=e=>{
+      console.log(e.target.value)
+      srp[subject] = e.target.value;
+      //row.remove();
     }
   }
   
   setSelect.onchange = async e=>{
-    let section = setSelect.value;
-    if (section){
-      section = section.toLowerCase();
+    let sectionK = setSelect.value;
+    if (sectionK){
+      sectionK = sectionK.toLowerCase();
       let sectionRef = doc(db, schoolId, "section");
       let sectDoc = await getDoc(sectionRef);
       table.innerHTML = "";
       if (sectDoc.exists()){
-        let subjects = sectDoc.data()[section].subjects;
+        let subjects = sectDoc.data()[sectionK].subjects;
+        srp = sectDoc.data()[sectionK].srp ?? {};
+        
         subjects.forEach(subj=>addRow(subj));
       }
     }
@@ -236,9 +223,9 @@ button.delete:hover {
     });
     console.log(subjs);
     set = set.toLowerCase();
-    let sectionRef = doc(db, schoolId, "section");
     data[set].subjects = subjs;
-    await setDoc(sectionRef, data);
+    data[set].srp = srp;
+    await setDoc(sectionRef, data, {merge: true});
     alert("saved");
   }
   </script>
