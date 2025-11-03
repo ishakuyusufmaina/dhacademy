@@ -1,45 +1,76 @@
 {
-    "name": "SAFA Islamic Science Academy",
-    "short_name": "SISA",
-    "start_url": "/signin.html",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#003399",
+    "name": "Maiduguri Innovative School",
+    "short_name": "Innovative",
+    "description": "Knowledge Is an Asset \u2014 Maiduguri Innovative School PWA",
     "icons": [
         {
-            "src": "favicon-32x32.png",
+            "src": "asset/favicon-32x32.png",
             "sizes": "32x32",
             "type": "image/png"
         },
         {
-            "src": "favicon-48x48.png",
+            "src": "asset/favicon-48x48.png",
             "sizes": "48x48",
             "type": "image/png"
         },
         {
-            "src": "favicon-64x64.png",
+            "src": "asset/favicon-64x64.png",
             "sizes": "64x64",
             "type": "image/png"
         },
         {
-            "src": "favicon-128x128.png",
+            "src": "asset/favicon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png"
+        },
+        {
+            "src": "asset/favicon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png"
+        },
+        {
+            "src": "asset/favicon-128x128.png",
             "sizes": "128x128",
             "type": "image/png"
         },
         {
-            "src": "favicon-192x192.png",
+            "src": "asset/favicon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png"
+        },
+        {
+            "src": "asset/favicon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png"
+        },
+        {
+            "src": "asset/favicon-168x168.png",
+            "sizes": "168x168",
+            "type": "image/png"
+        },
+        {
+            "src": "asset/favicon-192x192.png",
             "sizes": "192x192",
             "type": "image/png"
         },
         {
-            "src": "favicon-256x256.png",
+            "src": "asset/favicon-256x256.png",
             "sizes": "256x256",
             "type": "image/png"
         },
         {
-            "src": "favicon-512x512.png",
+            "src": "asset/favicon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png"
+        },
+        {
+            "src": "asset/favicon-512x512.png",
             "sizes": "512x512",
             "type": "image/png"
         }
-    ]
+    ],
+    "start_url": "/signin.html",
+    "display": "standalone",
+    "theme_color": "#800000",
+    "background_color": "#FFFFFF"
 }
