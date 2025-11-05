@@ -391,7 +391,29 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
       let hr = document.createElement("hr");
       wrapper.className = "table-container";
       //wrapper.innerHTML = '<img class="stamp" src="../../stamp.jpg">'
-      wrapper.appendChild(reportCard);
+      let psychoElm = document.createElement("table");
+      let txt = "";
+      let domains = sections[std.section].psychometrics;
+      console.log(domains, std.section);
+      
+      domains.forEach(d=>{
+        let r = psychoElm.insertRow();
+        let dC = r.insertCell();
+        std.psychometrics[d]??=0;
+        let measure = std.psychometrics[d];
+        dC.innerHTML = d;
+        let mC = r.insertCell();
+        mC.innerHTML = measure+"/5";
+      //  txt +=`<li>${d} - ${measure}/5</li>`;
+      });
+      let psychoCont = document.createElement("table");
+      psychoCont.innerHTML = `
+      <h3>Behaviour and Activities</h3>
+      `;
+      psychoCont.append(psychoElm);
+    
+      wrapper.append(reportCard, psychoCont);
+      
       let p = document.createElement("p");
       p.innerHTML = `
       TOTAL SCORE: ${std.score}<br>
