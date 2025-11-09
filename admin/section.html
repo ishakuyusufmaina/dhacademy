@@ -153,6 +153,21 @@ display: inline-block;
       const analytics = getAnalytics(app);
       const auth = getAuth(app);
     const db = getFirestore(app);
+  
+  
+  
+  let user = await new Promise(resolve=>
+  onAuthStateChanged(auth, u=> resolve(u))
+  );
+  let id = user.email.replace(/@.*/, "");
+console.log(id);
+  
+  
+    var teachers;
+     let teachersRef = doc(db, schoolId, "teachers");
+    let teachersDoc = await getDoc(teachersRef);
+  teachers = teachersDoc.exists()? teachersDoc.data() : {}
+    let teacher = teachers[id];
 
     
     const terms = ["first term", "second term", "third term"];
@@ -198,9 +213,9 @@ display: inline-block;
     function presentTable(data) {
       
       tb.innerHTML = "";
-      for (const section in data) {
+      teacher.adminFunctions.section.resources.forEach(section=> {
         presentRow(section, data[section]);
-      }
+      });
 
       function presentRow(section, sectObj) {
        // try {
