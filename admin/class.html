@@ -498,11 +498,11 @@ let sectionDoc = await getDoc(sectionRef);
       genderIn.value = !result.gender? "" : result.gender.toLowerCase();
   }
 add.onclick = e=>{
-  let cls = classSelect.value;
+  let cls = classSelect.value.trim();
   let section;
   for (const sect in sections){
     
-    if (sections[sect].classes.includes(cls)) {
+    if (sections[sect].classes.map(c=>c.trim()).includes(cls)) {
       section = sect;
    
     }
