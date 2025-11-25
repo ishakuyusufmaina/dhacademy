@@ -146,7 +146,7 @@
           <span>${role}</span>
           <button class="remove-btn" onclick="removeRole(${index})">Delete</button>
         `;
-       li.querySelector("button").onclick = e=> removeRole(index)
+       li.querySelector("button").onclick = e=> removeRole(index);
         roleList.appendChild(li);
       });
     }
