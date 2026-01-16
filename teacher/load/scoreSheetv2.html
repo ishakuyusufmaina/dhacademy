@@ -97,7 +97,7 @@
     <div id="date">Date: </div>
     <div id="session">Session: </div>
     <div id="clas">Class: </div>
-    <div id="subject">Subject: </div>
+    <div> <span id="subject">Subject:</span>  <input id="statusInp" type="checkbox"> </div>
   </header>
 
   <div class="table-container">
@@ -115,30 +115,30 @@
   </table>
   </div>
   <button id="saveBtn">Save</button>
-  <script src="../../config.js"></script>
+    <script src="../../config.js"></script>
  <script src="../../batch2.js"></script>
 
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
-  import {getFirestore, doc, writeBatch, setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getFirestore, enableIndexedDbPersistence, runTransaction, doc, setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
   import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
      // import {getDatabase, set, ref, onValue, child, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-   /*   const firebaseConfig = {
-        apiKey: "AIzaSyCm_DSZaYVQCt0ubBwRkE9nOTryJayxH0w",
-        authDomain: "school-in-the-box.firebaseapp.com",
-  projectId: "school-in-the-box",
-  storageBucket: "school-in-the-box.firebasestorage.app",
-  messagingSenderId: "596350496353",
-  appId: "1:596350496353:web:84c66c351700ddf0824420",
-  measurementId: "G-3MGCDH4FRF"
-};*/
+      
       const app = initializeApp(firebaseConfig);
       const analytics = getAnalytics(app);
       const auth = getAuth(app);
     const db = getFirestore(app);
-  const batch = writeBatch(db);
   
+  enableIndexedDbPersistence(db)
+  .catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.log("Multiple tabs open");
+    } else if (err.code === 'unimplemented') {
+      console.log("Browser not supported");
+    }
+  });
+
   const schoolId = "noble";
   const terms = ["first term", "second term", "third term"];
   
@@ -155,7 +155,6 @@
 
    
   var students = {};
-  var sbs; //subject based students
   let ses;
   let cls = localStorage.getItem("class");;
   console.log(cls);
@@ -187,9 +186,6 @@ await  render();
      return
    }
    let scoreSheetConfig = section.scoreSheetConfig;
-   let srp = section.srp??{};
-   console.log(JSON.stringify(srp));
-   console.log(subj);
    scoreSheetConfig??= {
      total: 100,
      assessments: [
@@ -207,9 +203,7 @@ await  render();
    console.log(session);
     if (!(clas && session)) return null;
     let stdsRef = doc(db, schoolId, session, clas, "students");
-    let smRef = doc(db, schoolId, session, clas, "scoremeta");
-   let stdsDoc = await getDoc(stdsRef);
-   sbs = {};
+    let stdsDoc = await getDoc(stdsRef);
    console.log(clas, stdsDoc.exists());
     if (stdsDoc.exists()){
       table.innerHTML = "";
@@ -228,56 +222,59 @@ await  render();
   
       students = stdsDoc.data();
       let studentsArr = Object.values(students).sort((a, b)=>a.name.trim().localeCompare(b.name.trim()));
-      console.log(studentsArr.length);
       studentsArr.forEach(student=>present(student, table.insertRow()));  
       
-      saveBtn.onclick = async e=>{
-        console.log(srp);
-        console.log(subj);
-        const faiths = {
-          "Islam": "Muslim",
-          "Christian": "Christian"
-        }
- 
-        let subjStdsArr = Object
-        .values(sbs);
-        assignPositions(subjStdsArr);
-        subjStdsArr.forEach(s=>{
-          delete s.next;
-          delete s.prev;
-        });
-        const scoremeta = {students: subjStdsArr };
-        scoremeta.max = subjStdsArr[0].score;
-        scoremeta.min = subjStdsArr[subjStdsArr.length-1].score;
-        
-        console.log(JSON.stringify(scoremeta));        
-        console.log(subjStdsArr.length);
-        let subjScoremeter = {};
-        subjScoremeter[subj] = scoremeta;
-        batch.set(smRef, subjScoremeter, {merge:true});
-        batch.set(stdsRef, students, {merge:true});
-        await batch.commit();
-        alert("saved!");
-        window.location.reload();
-      }      
+      
+      async function saveScores() {
+        const subjK = key(subj);
+        if (!subjK) return;
+        const clas = key(cls);
+        const session = key(ses.year + terms[ses.term]);
+        if (!(clas && session)) return null;
+        if (!Object.values(students).length) return;
+
+  const stdsRef = doc(db, schoolId, session, clas, "students");
+
+  await runTransaction(db, async (transaction) => {
+    // Optionally read existing data (if needed)
+    // const existing = await transaction.get(stdsRef);
+    let stdsDoc = await transaction.get(stdsRef);
+    let stds = stdsDoc.exists()? stdsDoc.data() : {};
+    // Write new data atomically
+    for (const stu in students){
+      console.log(stu, students[stu].id, subjK);
+      stds[stu].subjects??={};
+      stds[stu].subjects[subjK] = students[stu].subjects[subjK];
+    }
+     transaction.set(stdsRef, stds);
+  });
+
+   alert("Saved!");
+}
+  saveBtn.onclick= async e=>{
+    if (!students) return;
+    if (Object.values(students).length){
+    e.target.textContent = "Saving..";
+    await saveScores();
+    e.target.textContent = "Saved!";
+    setTimeout(_=>e.target.textContent = "Save", 1500);
+    }
+
+  }
+      
       function present(student, row){
+        
         row.innerHTML = "";
-        const faiths = {
-          "Islam": "Muslim",
-          "Christian": "Christian"
-        }
-        console.log(student.religion, student.name)
-        if (!!srp[subj] && (srp[subj]!==faiths[student.religion]))
-        return
         let id = row.insertCell();
         id.innerHTML = student.id;
         let name = row.insertCell(); 
         name.innerHTML = student.name.toUpperCase();
         student.subjects??={};
         student.subjects[subjK]??=[{}, {}, {}];
-        
         student.subjects[subjK][termIndex]??={}
         let scores = student.subjects[subjK][termIndex];
+        statusInp.checked = !student.subjects[subjK][termIndex].inactive;
+
         let sum = 0;
         scores.exam??="-";
         scores.exam = String(scores.exam);
@@ -342,36 +339,37 @@ await  render();
         
         //total.innerHTML = sum 
         let total = row.insertCell();
-        total.innerHTML = sum;    
-        sbs[student.id]={
-          score:sum,
-          id: student.id
-        }       
+        total.innerHTML = sum;        
       }
       
     }
  }
+  
+  
+ 
   
     function key(token){
       return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
     }
   
 
-  function assignPositions(students){
-     students.sort((a, b)=>b.score - a.score);
-     students.forEach((student, i)=>{
-       student.position = i+1
-       if (students[i+1])
-       student.next = students[i+1];
-       if (students[i-1])
-       student.prev = students[i-1];
-       if ((!!student.prev) && (student.score == student.prev.score))
-       student.position = student.prev.position;
-       //console.log(student.position);
-     });
-   }
   
-  
+  statusInp.oninput= async e =>{
+    if (!(students && Object.keys(students).length)) return;
+    if (!window.confirm("Are you sure you want to change activation status of this score sheet?")) return;
+      Object.values(students).forEach((student, i)=>{
+       //let student = students[key];
+        student.subjects ??={};
+        student.subjects[subjK] ??= [{}, {}, {}];
+        student.subjects[subjK][termIndex].inactive = !!student.subjects[subjK][termIndex].inactive
+        student.subjects[subjK][termIndex].inactive = !student.subjects[subjK][termIndex].inactive;
+        statusInp.checked = !student.subjects[subjK][termIndex].inactive;
+      });
+  //  await saveScores();
+//    alert("done");
+  //  window.location.reload();
+   // console.log(subjK);
+  }
   </script>
 </body>
 </html>
