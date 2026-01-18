@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Title -->
-<title>Noble Pearls Academy</title>
+<title id="title"></title>
 
 <!-- Favicon -->
 <link rel="icon" id="icon" type="image/jpeg" />
@@ -110,6 +110,14 @@
   </style>
   
   <script src="config.js"></script>
+  
+  
+</head>
+<body>
+
+  <h1>Welcome to <small>SIB</small> <span id="sName"></span> Installation</h1>
+  <button id="install-btn">Install App</button>
+   
   <script>
     sName.textContent = schoolName;
   if ('serviceWorker' in navigator) {
@@ -118,17 +126,14 @@
       .catch(err => console.error('Service Worker registration failed:', err));
   }
   </script>
-  
-</head>
-<body>
-
-  <h1>Welcome to <small>SIB</small> <span id="sName"></span> Installation</h1>
-  <button id="install-btn">Install App</button>
-   <script src="config.js"></script>
   <script>
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
-sName.innerHTML = schoolName;
+const sName = document.getElementById('sName');
+const title = document.getElementById('title');
+
+  sName.innerHTML = schoolName;
+  title.innerHTML = schoolName;
   icon.href=schoolURL + "/logo.png";
   
     window.addEventListener('beforeinstallprompt', (e) => {
