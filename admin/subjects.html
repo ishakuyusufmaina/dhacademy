@@ -169,7 +169,7 @@ button.delete:hover {
     console.log(JSON.stringify(data));
     for (const set in data){
      // console.log(key);
-      if (!teachers[id].adminFunctions.subjects.resources.includes(set)) continue;
+      if (id!==schoolId && !teachers[id].adminFunctions.subjects.resources.includes(set)) continue;
       let opt = document.createElement("option");
       opt.innerHTML = set;
       setSelect.append(opt);
