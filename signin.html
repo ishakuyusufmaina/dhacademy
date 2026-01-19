@@ -268,7 +268,7 @@ h1.innerHTML = schoolName;
   
   let teachersRef = doc(db, schoolId, "teachers");
   let teacherDoc = await getDoc(teachersRef);
-   let teachers = teacherDoc.exists()? teacherDoc.data() : {};
+   let teachers = teacherDoc.exists()? teacherDoc.data() : {[schoolId]: {name: schoolName}};
 
       loginBtn.textContent = "Login";
   var schoolGeneratedUsername;
