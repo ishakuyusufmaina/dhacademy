@@ -1,2 +1,2 @@
 const schoolId = "liyat";
-const schoolName = "LIYAT ACADEMY";
+const schoolName = "LIYAT ACADEMY MAIDUGURI";
