@@ -270,7 +270,7 @@ h1.innerHTML = schoolName;
   let teacherDoc = await getDoc(teachersRef);
    let teachers = teacherDoc.exists()? teacherDoc.data() : null;
       if (!teachers){
-        teachers = {[schoolId]: {name: schoolName, username:schoolId } };
+        teachers = {[schoolId]: {name: schoolName, username:schoolId, psw: "123456" } };
         await setDoc(teachersRef, teachers)
       }
       loginBtn.textContent = "Login";
