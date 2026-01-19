@@ -1,7 +1,7 @@
 {
   "name": "Liyat Academy Maiduguri",
   "short_name": "Liyat",
-  "start_url": ".",
+  "start_url": "/signin.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1aa6d1",
