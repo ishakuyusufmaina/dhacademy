@@ -1,7 +1,7 @@
 {
   "name": "Evangel Model Secondary School Maiduguri",
   "short_name": "Evangel",
-  "start_url": ".",
+  "start_url": "/signin.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1f7fb2",
