@@ -1,10 +1,10 @@
 {
-  "name": "Liyat Academy Maiduguri",
-  "short_name": "Liyat",
-  "start_url": "/signin.html",
+  "name": "Evangel Model Secondary School Maiduguri",
+  "short_name": "Evangel",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1aa6d1",
+  "theme_color": "#1f7fb2",
   "icons": [
     {
       "src": "asset/favicon-32x32.png",
