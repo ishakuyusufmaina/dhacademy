@@ -332,7 +332,9 @@ let sectIds = teachers[id].adminFunctions.scoresheetConfig.resources;
     let derivedAsms = section.scoreSheetConfig.derivedAsms.map(d=> d.derivatives).flat(1);
     derivedAsms = Array.from(new Set(derivedAsms));
     let asms = section.scoreSheetConfig.assessments.map(a=> a.name);
-    if (!arraysHaveSameValues(derivedAsms, asms)){
+    let filtered = derivedAsms.filter(d=> asms.includes(d));
+    
+    if (derivedAsms.length !== filtered.length){
       alert("Incompatible assessment derivation");
       return;
     }
