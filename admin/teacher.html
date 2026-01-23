@@ -300,6 +300,7 @@ const teachers = teachersDoc.data();
   
   if (sectionDoc.exists()){
   let sections = sectionDoc.data();
+    console.log(teachers[teacherId].sections);
     Object.keys(sections).forEach(key=>{
     let section = sections[key];
     let subjects = section.subjects.sort((a, b)=>a.localeCompare(b));
