@@ -4,220 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Student Center</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background: #f0f4f8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-    }
-
-    .container {
-      background: white;
-      padding: 2rem;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 500px;
-      position: relative;
-    }
-
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-      margin-bottom: 1.5rem;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #34495e;
-    }
-
-    select, input[type="text"] {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1.2rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: border-color 0.3s;
-    }
-
-    select:focus, input[type="text"]:focus {
-      border-color: #3498db;
-      outline: none;
-    }
-
-    .button, .link-button {
-      display: block;
-      text-align: center;
-      background-color: #3498db;
-      color: white;
-      text-decoration: none;
-      padding: 0.75rem;
-      border-radius: 10px;
-      font-weight: bold;
-      transition: background-color 0.3s;
-      cursor: pointer;
-      margin-top: 0.5rem;
-    }
-
-    .button:hover, .link-button:hover {
-      background-color: #2980b9;
-    }
-
-    .results {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      border: 1px dashed #ccc;
-      border-radius: 10px;
-      background: #fafafa;
-      display: none;
-    }
-
-    .results h3 {
-      margin-top: 0;
-      color: #2c3e50;
-    }
-
-    @media (max-width: 600px) {
-      .container {
-        padding: 1rem;
-      }
-    }
-  
-  
-  
-  .button {
-  position: relative;
-  padding-right: 2.5em; /* space for spinner */
-}
-
-/* Base spinner style (invisible by default) */
-.button .spinner {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  border: 2px solid transparent;
-  border-top-color: white;
-  border-radius: 50%;
-  animation: none;
-  position: absolute;
-  right: 0.75em;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* When button has .loading class, spinner spins and is visible */
-.button.loading .spinner {
-  opacity: 1;
-  animation: spin 0.6s linear infinite;
-}
-
-/* Spin keyframes */
-@keyframes spin {
-  to {
-    transform: translateY(-50%) rotate(360deg);
-  }
-}
-  
-  
-  #resultsContent {
-  max-width: 600px;
-  margin: auto;
-  padding: 1rem;
-}
-  
-  .resultElm {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  margin-bottom: 0.8rem;
-  background: #fdfdfd;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  transition: background 0.2s ease;
-  flex-wrap: wrap;
-}
-
-.resultElm:hover {
-  background: #f0f8ff;
-}
-
-.studentPic {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 2px solid #ccc;
-  flex-shrink: 0;
-}
-
-.studentInfo {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-  flex-grow: 1;
-}
-
-.studentName {
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: #333;
-  word-wrap: break-word;
-}
-
-.studentClass {
-  font-size: 0.95rem;
-  color: #666;
-  word-wrap: break-word;
-}
-
-@media (max-width: 480px) {
-  .resultElm {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .studentPic {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 0.5rem;
-  }
-
-  .studentName {
-    font-size: 1rem;
-  }
-
-  .studentClass {
-    font-size: 0.9rem;
-  }
-}
-  
-  img.logo {
-    height: 70px;
-    width: 70px;
-    display: inline-block;
-    border-radius: 50%;
-    position: absolute;
-    top: calc(-70px/2);
-    left: calc(50% - 70px/2);
-  }
-  </style>
+  <link rel="stylesheet" href="index.css">
+  <script src="feesrule.js"></script>
 </head>
 <body>
   
@@ -228,6 +16,14 @@
     <select id="sessionSelect">
       <option value="">-session-</option>
     </select>
+    <!--
+    <select>
+      <option value="">-section-</option>
+    </select>
+    <select>
+      <option value="">-class-</option>
+    </select>
+    -->
     <label for="searchBy">Search by</label>
     <select id="searchBy">
       <option value="id">Student ID</option>
@@ -251,7 +47,7 @@
     </div>
   </div>
 
-    <script src="../../config.js"></script>
+   <script src="../../config.js"></script>
   <script src="../../batch2.js"></script>
   <script src="utility.js"></script>
   <script type="module" defer>
@@ -259,38 +55,29 @@
     */
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
-  import {getFirestore, sum, getAggregateFromServer, query, limit, where, getDocs, collection, doc, setDoc, getDoc, runTransaction} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getFirestore, onSnapshot, sum, getAggregateFromServer, query, limit, where, getDocs, collection, doc, setDoc, getDoc, runTransaction} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
   import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
      // import {getDatabase, set, ref, onValue, child, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-      /*const firebaseConfig = {
-  apiKey: "AIzaSyCm_DSZaYVQCt0ubBwRkE9nOTryJayxH0w",
-  authDomain: "school-in-the-box.firebaseapp.com",
-  projectId: "school-in-the-box",
-  storageBucket: "school-in-the-box.firebasestorage.app",
-  messagingSenderId: "596350496353",
-  appId: "1:596350496353:web:84c66c351700ddf0824420",
-  measurementId: "G-3MGCDH4FRF"
-};*/
+       
   
   
  // const schoolId="almadeenah";
     
       const app = initializeApp(firebaseConfig);
-     const analytics = getAnalytics(app);
-      const auth = getAuth(app);
-    const db = getFirestore(app);
-
+    const paybook = initializeApp(paybookConfig, "paybook");
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const paydb = getFirestore(paybook);
+  
 const terms = ["first term", "second term", "third term"];
-
   var session;
   let sessionsRef = doc(db, schoolId, "sessions");
-  //let studentsRef = doc(db, schoolId, "classes");
   let sessionsDoc = await getDoc(sessionsRef);
   if (sessionsDoc.exists()){
     let sessions =  sessionsDoc.data().sessions;
      sessions= sessions.sort((a, b)=>b.no - a.no);
-    //sessionLabel.innerText =terms[sessions[0].term] + ", "+ sessions[0].year;
-    sessions.forEach(session=>{
+     sessions.forEach(session=>{
       let opt = new Option(session.year +', '+ terms[session.term].toUpperCase());
       opt.value = sessionKey(session);
       sessionSelect.append(opt);
@@ -299,11 +86,7 @@ const terms = ["first term", "second term", "third term"];
     sessionSelect.value = sessionKey(session);
     sessionSelect.onchange = _=>{
       let i = _.target.selectedIndex;
-      console.log(i);
-      if (i) {
-        session = sessions[i-1];
-        
-      }
+      if (i) session = sessions[i-1];
       
     }
       //sessionSelect.firstChild.nextElementSibling.selected = true;
@@ -314,9 +97,9 @@ const terms = ["first term", "second term", "third term"];
   onAuthStateChanged(auth, u=> resolve(u))
   );
   let id = user.email.replace(/@.*/, "");
-console.log(id);
+  console.log(id);
   
-    //let sessionsRef = doc(db, schoolId, "sessions");
+  
     var teachers;
      let teachersRef = doc(db, schoolId, "teachers");
     let teachersDoc = await getDoc(teachersRef);
@@ -359,19 +142,24 @@ console.log(id);
         alert("Please select a session and term");
         return;
       }
-      console.log(sess);
+    //  console.log(sess);
       let sessRef = doc(db, schoolId, sess.replace("_", ""));
+      const feesRuleRef = doc(db, schoolId, "payments", "rules", sessionSelect.value);
+      const rulesDoc = await getDoc(feesRuleRef);
+      
       let sessDoc = await getDoc(sessRef);
-      console.log(JSON.stringify(sessDoc.data()));
+    //  console.log(JSON.stringify(sessDoc.data()));
       let fees = sessDoc.data()?.fees;
-      if (!fees) {
-        alert("Fees not fixed");
+      if (!rulesDoc.exists()) {
+        alert("Fees rule not set");
         return;
       }
+      const rules = rulesDoc.data().rules;
+      
       const queryType = select.value;
       const queryValue = input.value.trim().toLowerCase();
       
-      console.log(queryValue);
+     // console.log(queryValue);
 
       if (!queryValue) {
         resultsBox.style.display = "none";
@@ -392,15 +180,15 @@ console.log(id);
 
         })
         newArr = newArr.reverse();
-        console.log(newArr);
+    //    console.log(newArr);
         q = query(collection(db, schoolId, "db", "students"), where("section", "in", sects), where("names", "array-contains-any", ...newArr));
-        console.log(sects);
+      //  console.log(sects);
       } else {
-        console.log(queryType);
-        console.log(queryValue);
+    //    console.log(queryType);
+     //   console.log(queryValue);
         q = query(collection(db, schoolId, "db", "students"), where("section", "in", sects), where(queryType, "==", queryValue));
 
-        console.log(sects);
+     //   console.log(sects);
       }
       let studentDocs = await getDocs(q);
       searchBtn.classList.remove("loading");
@@ -409,7 +197,7 @@ console.log(id);
       
       studentDocs.forEach(async (doc)=> {
         let student = doc.data();
-        console.log(JSON.stringify(student));
+       // console.log(JSON.stringify(student));
       
         student.classes??=[student.class];
         student.classes.forEach( async cls=>{
@@ -419,12 +207,20 @@ console.log(id);
           }
           sectStd.class = cls;
           
-          console.log(sectStd.class);
+        //  console.log(sectStd.class);
         let q = getQuery({
           id: sectStd.id, 
          "class": sectStd.class,
           term: session.term+"",
           year: session.year
+        });
+          console.log(Number(session.term+1));
+        let pbQuery = queryPB({
+          id: sectStd.id.replaceAll("/", "_"), 
+         "class": sectStd.class,
+          term: Number(session.term),
+          session: session.year.replaceAll(" ", ""),
+          schoolId
         });
   
           let snapshot;
@@ -437,15 +233,33 @@ console.log(id);
        }
         let amount = snapshot.data().totalPaid;
         sectStd.amountPaid = amount;
-        console.log(amount);
+        sectStd.paymentQuery = pbQuery;
+      //  console.log(amount);
         students.push(sectStd)
         presentResult();
-        })
-      });
+        onSnapshot(pbQuery, snap => {
+            let total = 0;
+            let timestamps = [];
+            snap.forEach(d => {
+              total += d.data().amount;
+              timestamps.push(d.data().timestamp);
+              console.log(d.data().timestamp);
+            });
+          timestamps = timestamps
+          .sort((a, b) => b.toMillis() - a.toMillis())
+          .map(ts=>formatTimestamp(ts));
+          sectStd.amountPaid = total;
+            sectStd.lastPaidAt = timestamps[0];
+           //sectStd.payment = 
+            console.log("amount paid", student.name, total);
+            sectStd.render?.();
+        });
+     });
+      })
      
       function presentResult(){
-        console.log("there is student");
-       populateResults(students, fees);
+        //console.log("there is student");
+       populateResults(students, rules);
         resultsBox.style.display = "block";
 
       }
@@ -467,43 +281,90 @@ console.log(id);
   
 
   
-  function populateResults(students, fees) {
-  const container = document.getElementById("resultsContent");
-  container.innerHTML = ""; // Clear previous results
+  function populateResults(students, rules) {
+    const container = document.getElementById("resultsContent");
+    container.innerHTML = ""; // Clear previous results
 
   students.forEach(student => {
-    console.log(typeof student.names);
+   // console.log(typeof student.names);
     const resultElm = document.createElement("div");
     resultElm.className = "resultElm";
     let stdSect = classSection.get(student.class);
-    console.log(student.class);
-    console.log(stdSect);
-    let dueFee = Number(fees[stdSect]);
+    student.section = stdSect;
+   // console.log(student.class);
+   // console.log(stdSect);
+    let stdRules = getApplicableRules(student, rules);
+    evaluateRules(priorityRule, stdRules);
+    let rule = getAppliedRule(stdRules)??{amount: 0};
+    
+    let dueFee = Number(rule.amount);
+    console.log(student.name, JSON.stringify(stdRules));
+
     //let stdFees = student.schoolFees?? {};
     
-    let amountPaid = Number(student.amountPaid);
-    console.log(dueFee);
-    let outstanding = dueFee - amountPaid; 
-    resultElm.innerHTML = `
-      <img src="${student.picURL}" alt="Picture of ${student.name}" class="studentPic">
+     render();
+    let n = 1;
+    function render(){
+       let amountPaid = Number(student.amountPaid);
+   //   console.log(dueFee);
+      let outstanding = dueFee - amountPaid; 
+      student.render = render;
+      resultElm.innerHTML = `
+      <img src="${student.picURL??"blank-passp.jpg"}" alt="Picture of ${student.name}" class="studentPic">
       <div class="studentInfo">
         <div class="studentName">${student.name.toUpperCase()}</div>
         <div class="studentClass">${student.class.toUpperCase()}</div>
         <div class="studentClass">Amount Paid: ₦${amountPaid}</div>
        <div class="studentClass">Outstanding: ₦${outstanding}</div>
+      <div class="studentClass">Last timestamp: ${student.lastPaidAt??"------"}</div>
 
       </div>
-    `;
-    resultElm.onclick = e=>{
+      <div class="account studentInfo">
+        <button class="button">Record payment</button>
+      </div>
+      `;
+    const acElm = resultElm.querySelector(".account");
+    if (student.account){
+      const acc =student.account; 
+      acElm.innerHTML = `
+        <div class="studentName">Account</div>
+      <div class="studentClass">ACC. No: ${acc.accountNumber}</div>
+       <div class="studentClass">ACC. Name: ${acc.accountName}</div>
+       <div class="studentClass">Bank. Name: ${acc.bankName}</div>      
+      `;
+    } else {
+      let btn = acElm.querySelector("button");
+      btn.onclick = async e=>{
+        window.location.href = "payment-form.html?id="+student.id;
+        return;
+        btn.innerHTML = "requesting..";
+        let data = await createDVA(student.id.replaceAll("/", "_"), schoolId, "batch2", "2025/2026", 1);
+        btn.innerHTML = "request sent";
+       // console.log(data.success, JSON.stringify(data));
+        let stdRef = doc(db, schoolId, "db", "students", student.id.replaceAll("/", "_"));
+        onSnapshot(stdRef, (docSnap)=>{
+          let data = docSnap.data();
+          for (const k in data){
+            student[k] = data[k];
+          }
+          render();
+        })
+      }//end of onclick event
+    } //end of else
+    
+      
+    /*resultElm.onclick = e=>{
       localStorage.setItem("student", JSON.stringify(student));
       localStorage.setItem("session", JSON.stringify(session));
       localStorage.setItem("fee", dueFee);
       
       window.location.href = "entry.html";
-    }
+    }*/
+    } //end of render
     container.appendChild(resultElm);
-  });
-}
+  }); //end of forEach
+  }
+      
   function key(token){
       return token.replaceAll(" ","").replaceAll("/", "_").replaceAll(",", "").trim();
     }
@@ -514,10 +375,10 @@ console.log(id);
   
   
   function getQuery(sfCoord){
-    console.log(JSON.stringify(sfCoord));
+    //console.log(JSON.stringify(sfCoord));
     let ref = collection(db, schoolId, "db", "fees");
-    console.log(sfCoord.term);
-    console.log(sfCoord.class);
+//    console.log(sfCoord.term);
+  //  console.log(sfCoord.class);
     return query(ref, 
     where("student", "==", sfCoord.id),
     where("class", "==", sfCoord.class), 
@@ -527,6 +388,58 @@ console.log(id);
     );
   }
   
+ function queryPB(sfCoord){
+    console.log(JSON.stringify(sfCoord));
+    let ref = collection(paydb, "payments");
+    //console.log(sfCoord.term);
+   // console.log(sfCoord.class);
+    return query(ref, 
+      where("studentId", "==", sfCoord.id),
+      where("class", "==", sfCoord.class), 
+      where("session", "==", sfCoord.session), 
+      where("term", "==", sfCoord.term),
+      where("schoolId", "==", sfCoord.schoolId)
+    );
+  }
+  
+  
+  async function createDVA(studentId, schoolId, schoolBatch, session, term){
+    const response= await fetch("http://cfx-mainafly.netlify.app/.netlify/functions/assign-dva", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        studentId, schoolId, schoolBatch, session, term
+      }),
+    });
+    const data = await response.json();
+    return data;
+  }
+  
+  
+  function getSectionByClass(cls, sections){
+     let section = null;
+     for (const sect in sections){    
+       let classes = sections[sect].classes.map(c=>key(c).toLowerCase())
+       console.log(classes, cls);
+       if (classes.includes(key(cls).toLowerCase())) {
+         section = sect;   
+       }
+     } 
+     return section
+  }
+  
+  function formatTimestamp(ts) {
+  const d = ts.toDate();
+
+  return `${d.getFullYear()}-${
+    String(d.getMonth() + 1).padStart(2, "0")
+  }-${String(d.getDate()).padStart(2, "0")}
+  ${String(d.getHours()).padStart(2, "0")}:${
+    String(d.getMinutes()).padStart(2, "0")
+  }`;
+}
   </script>
 </body>
 </html>
