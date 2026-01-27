@@ -326,8 +326,8 @@ let teachersRef = doc(db, schoolId, "teachers");
     document.querySelector(".menu-container").classList.remove("show");
 
   }
-  
-  
+  let loads = {};
+  let classes;
   onAuthStateChanged(auth, user=>{
     let reg = /@.*/;
     if (user){
@@ -338,17 +338,43 @@ let teachersRef = doc(db, schoolId, "teachers");
        if (name)
        updateProfile(user, {displayName: name})
 
-      }
+      } //end of if user has no name
       username.textContent = `(${name})`;
-      if (teachersDoc.exists()){
-        teacher = teachersDoc.data()[id];
-        if (!teacher) {
-          alert("It seems your account has not been properly created by an admin. If you think this is a mistake talk to your admin");
-          return;
-        }
+      if (!teachersDoc.exists()) return;
+      teacher = teachersDoc.data()[id];
+      if (!teacher) {
+        alert("It seems your account has not been properly created by an admin. If you think this is a mistake talk to your admin");
+        return;
+      } //end of if there is teacher
+      
+        
+        let role = teacher.role ?? {};
+        let fmClasses = role.fm ?? [];
+        let ctClasses = role.ct ?? [];
+        classes = fmClasses.concat(ctClasses);
+        let cls = ctClasses[0];
+        if (cls){
+          let sections = sectionDoc.exists()? sectionDoc.data() : {};
+          let section
+          for (const sect in sections){
+            section = sections[sect];
+            section.classes ??=[];
+            if (section.classes.includes(cls)) {
+              let subjects = section.subjects || [];
+              subjects.forEach(subject=>{
+                loads[subject] = [cls];
+              })
+            }//end of if classes of the section contains cls
+          }//end of for each section in sections 
+        }//end of if there is a class, cls, in ctClasses         
+        else { //there is no class, cls, in ctClasses
+          loads = teacher.load;
+        } // end of else
+      
+    
          let loadCont = document.querySelector(".load-container");
-        for (const subj in teacher.load){
-          let classes = teacher.load[subj];
+        for (const subj in loads){
+          let classes = loads[subj];
           classes.forEach(cls=>{
             let loadElm = document.createElement("div");
             loadElm.innerHTML =`${subj} ${cls}`;
@@ -357,20 +383,16 @@ let teachersRef = doc(db, schoolId, "teachers");
               localStorage.setItem("class", cls);
               localStorage.setItem("subject", subj);
               window.location.href = "load/index.html";
-              
-          }
+            }
             loadCont.append(loadElm);
           });
-         //alert(classes)
-          
         }
-        if (!Object.keys(teacher.load).length) loadCont.innerHTML +="No academic load has been assigned to you";
+        if (!Object.keys(loads).length) loadCont.innerHTML +="No academic load has been assigned to you";
         
-        let role = teacher.role ?? {};
-        let fmClasses = role.fm ?? [];
+        
        // alert(fmClasses);
         let regCont = document.querySelector(".register-container");
-        fmClasses.forEach(cls=>{
+        classes.forEach(cls=>{
           let regElm = document.createElement("div");
           regElm.classList.add("register");
           regElm.innerHTML = cls;
@@ -382,12 +404,12 @@ let teachersRef = doc(db, schoolId, "teachers");
           regCont.appendChild(regElm);
         })
         
-      if (!fmClasses.length) regCont.innerHTML +="No form master role has been assigned to you";
-      }
-    } else {
+      if (!classes.length) regCont.innerHTML +="-";
+      
+    } /*there is no user */ else {
       window.location.href = "../signin.html";
     }
-  })
+    })
   
   document.getElementById("switch").onclick = e=> {
       window.location.href = "../admin/admin.html";
