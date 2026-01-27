@@ -134,7 +134,12 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
        let classes = sects[key].classes;
        classes.forEach(clas=>optG.innerHTML +=`<option>${clas}</option>`);
        classSelect.append(optG);
-   }) else hos.adminFunctions.rc.resources.forEach(clas=>classSelect.innerHTML +=`<option>${clas}</option>`);
+   })
+     else hos
+       .adminFunctions
+       .rc
+       .resources
+       .forEach(clas=>classSelect.innerHTML +=`<option>${clas}</option>`);
 
 
  }
