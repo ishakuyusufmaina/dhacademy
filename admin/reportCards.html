@@ -134,12 +134,9 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
        let classes = sects[key].classes;
        classes.forEach(clas=>optG.innerHTML +=`<option>${clas}</option>`);
        classSelect.append(optG);
-   })
-     else hos
-       .adminFunctions
-       .rc
-       .resources
-       .forEach(clas=>classSelect.innerHTML +=`<option>${clas}</option>`);
+   }) 
+     else hos.adminFunctions
+     .rc.resources.forEach(clas=>classSelect.innerHTML +=`<option>${clas}</option>`);
 
 
  }
@@ -164,7 +161,7 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
     }
     
    console.log(sectK);
-    srp = sections[sectK].srp;
+    srp = sections[sectK].srp || {};
     scoreInterpretations = sections[sectK].scoreInterpretations;
     scoreSheetConfig = sections[sectK].scoreSheetConfig;
     let assessments = scoreSheetConfig.assessments??[{name: "CA", subtotal: 30}];
