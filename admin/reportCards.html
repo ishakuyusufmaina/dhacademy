@@ -275,12 +275,14 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
      // console.log(std.religion);
       let interp = interpret(std.score/std.sc, scoreInterpretations);
       const g = interp.grade? interp.grade : grade(0, std.score/std.sc)
-  
+      if (std.picURL) std.pic = optimizeCloudinaryUrl(std.picURL)
+      else std.pic = "std.jpg";
       let cls = classSelect.value.toLowerCase()[0];      
       let reportCard = document.createElement("table");
       reportCard.innerHTML = `
       <caption>
       <header>
+     
       <h2>${schoolName.toUpperCase()}</h2>
       <address>
       -School Address-
@@ -297,7 +299,11 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
       </div>
       <h3>TERMINAL REPORT</h3>
           <table class="student-info-table">
-      
+            <tr>
+      <td colspan="2" class="std-pic-container">
+            <img class="logo" src="${optimizeCloudinaryUrl(std.picURL)}">
+      </td>
+      </tr>
       <tr class="std-name">          
         <td>NAME: ${std.name.toUpperCase()}</td>
         <td>GENDER: ${std.gender}</td>
@@ -312,7 +318,7 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
       </tr>
       <tr>
       <td>NO: IN CLASS: ${students.length}</td>      
-      <td>POSITION: ${std.position}</td>
+      <td>POSITION: ${g}</td>
       </tr>
       </table> 
       </caption>
@@ -579,6 +585,11 @@ let teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
   }
 
   return num + suffix;
+}
+  
+  function optimizeCloudinaryUrl(url, params = "f_auto,q_auto") {
+    if (!url || !url.length) return "../../std-pic.jpg";
+    return url.replace("/upload/", `/upload/${params}/`);
 }
   </script>
   
@@ -895,10 +906,23 @@ table tr:nth-child(odd) {
   .n, .c {
     display: none;
   }
+  
+    header {
+    position: relative;
+  } 
+  
 
-  .std-name {
-    text-transform: uppercase;
-  }
+  
+  .std-pic-container > img {
+    display: block;
+    margin: auto;
+   // max-width: 100px;
+   // max-height: 150px;
+    
+  border: 2px solid #e5e7eb; /* light gray */
+  border-radius: 12px;
+  padding: 4px;
+}
   </style>
 </body>
 </html>
