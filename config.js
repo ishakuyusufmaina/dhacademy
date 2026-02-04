@@ -1,2 +1,2 @@
-const schoolId = "evangel";
-const schoolName = "EVANGEL MODEL SCHOOL MAIDUGURI";
+const schoolId = "dhacademy";
+const schoolName = "DEVELOPMENT HUB ACADEMY";
