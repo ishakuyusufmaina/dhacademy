@@ -1,6 +1,6 @@
 {
-  "name": "Development Hub",
-  "short_name": "DevHub",
+  "name": "Development Hub Academy",
+  "short_name": "DH Acad",
   "icons": [
     {
       "src": "favicon-32x32.png",
@@ -68,7 +68,7 @@
       "type": "image/png"
     }
   ],
-  "start_url": ".",
+  "start_url": "/signin.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff"
