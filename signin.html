@@ -268,12 +268,9 @@ h1.innerHTML = schoolName;
   const db = getFirestore(app);
   
   let teachersRef = doc(db, schoolId, "teachers");
-  let teacherDoc = await getDoc(teachersRef);
-   let teachers = teacherDoc.exists()? teacherDoc.data() : null;
-      if (!teachers){
-        teachers = {[schoolId]: {name: schoolName, username:schoolId, psw: "123456" } };
-        await setDoc(teachersRef, teachers)
-      }
+  let teacherDoc; //  await getDoc(teachersRef);
+   let teachers; // teacherDoc.exists()? teacherDoc.data() : null;
+     
       loginBtn.textContent = "Login";
   var schoolGeneratedUsername;
   
@@ -317,13 +314,53 @@ h1.innerHTML = schoolName;
     }
   
   const logBtn = document.getElementById("loginBtn");
+      
   logBtn.onclick = signIn;
 
   let reg = /.*@/;
+
+
+  async function signInAsStd(){
+    //logBtnS.textContent = "Logging..";
+      const id = document.getElementById("email").value;
+      const pin = document.getElementById("password").value;
+
+    let q = query(
+    collection(stdDb, "students"),
+    where("pin", "==", Number(pin)),
+    where("id", "==", id)
+    );
+    let docs = await getDocs(q);
+    let std;
+    docs.forEach(doc=>{
+      std = doc.data()
+    });
+    if (std) {
+      window.localStorage.setItem("id", std.id);
+      window.location.href = "student.html";
+    } else {
+      alert("Wrong login credential. Meet your form master/class teacher for your ID and login PIN");
+    }
+  }
   
   async function signIn() {
       logBtn.textContent = "Logging..";
+    logBtn.textContent = "Logging..";
       const username = document.getElementById("email").value;
+    if (isStudent(username)){
+      await signInAsStd();
+      logBtn.textContent = "Login"
+      return;
+    }
+
+     teachersRef = doc(db, schoolId, "teachers");
+   teacherDoc = await getDoc(teachersRef);
+   teachers = teacherDoc.exists()? teacherDoc.data() : {};
+ if (!teachers){
+        teachers = {[schoolId]: {name: schoolName, username:schoolId, psw: "123456" } };
+        await setDoc(teachersRef, teachers)
+      }
+     
       const email = username.replace(/@.*/, "")+`@teacher.${schoolId}`;
      schoolGeneratedUsername = username.replace(/@.*/, "");
       const role = username.replace(reg, "");
@@ -418,7 +455,9 @@ h1.innerHTML = schoolName;
     }
 
       
-      
+      function isStudent(id){
+    return id.includes("/");
+  }    
   </script>
   
 </body>
