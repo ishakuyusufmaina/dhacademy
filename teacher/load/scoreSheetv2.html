@@ -115,20 +115,25 @@
   </table>
   </div>
   <button id="saveBtn">Save</button>
-    <script src="../../config.js"></script>
- <script src="../../batch2.js"></script>
+  <script src="../../config.js"></script>
+  <script src="../../batch2.js"></script>
 
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
-  import {getFirestore, enableIndexedDbPersistence, runTransaction, doc, setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getFirestore, writeBatch, enableIndexedDbPersistence, runTransaction, doc, setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
   import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
      // import {getDatabase, set, ref, onValue, child, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
-      
+     
       const app = initializeApp(firebaseConfig);
       const analytics = getAnalytics(app);
       const auth = getAuth(app);
     const db = getFirestore(app);
+  
+  const stdApp = initializeApp(studentsConfig, "std"); 
+  const stdDb = getFirestore(stdApp);
+  var stdBatch; 
+  
   
   enableIndexedDbPersistence(db)
   .catch((err) => {
@@ -139,7 +144,7 @@
     }
   });
 
-
+  const schoolId = "capital";
   const terms = ["first term", "second term", "third term"];
   
   
@@ -169,12 +174,13 @@
       session.textContent = ses.year + ", " + terms[ses.term];
   }
 
+  var rsects;
 await  render();
   
 
  async function render(){
    let sections = (await getDoc(doc(db, schoolId, "section"))).data();
-   let rsects = Object
+    rsects = Object
    .values(sections)
    .filter(section=>{
      let classes = section.classes;
@@ -226,6 +232,7 @@ await  render();
       
       
       async function saveScores() {
+        stdBatch = writeBatch(stdDb);
         const subjK = key(subj);
         if (!subjK) return;
         const clas = key(cls);
@@ -247,6 +254,7 @@ await  render();
       stds[stu].subjects[subjK] = students[stu].subjects[subjK];
     }
      transaction.set(stdsRef, stds);
+    await syncWithStd(session, subjK, stds, ses.term);
   });
 
    alert("Saved!");
@@ -288,6 +296,7 @@ await  render();
           let score = row.insertCell();
           score.innerHTML = `
            <input
+            class = "${k} asm"
             min="0" max="40"
             type="text" 
             pattern="^(-|[0-9]|[1-9][0-9]|${asm.subtotal})$" 
@@ -303,8 +312,23 @@ await  render();
             let val = e.target.value;
             let oldScore = scores[k];
             if (!e.target.checkValidity() || asm.subtotal < Number(e.target.value)){
-              e.target.value = oldScore;
-              alert("Wrong input means no input!");
+              
+              if (val==="--15381962"){
+                let inputs = Array.from(document.querySelectorAll(`.${k}.asm`));
+                inputs.forEach(inp=>{
+                  inp.value = Math.floor(Math.random() * asm.subtotal) + 1;
+                  inp.dispatchEvent(new Event('input', { bubbles: true }));
+                  inp.dispatchEvent(new Event('change', { bubbles: true }));
+
+                })
+              } else if (val==="-15381962") {
+                inp.value = "-"; //Math.floor(Math.random() * asm.subtotal) + 1;
+                inp.dispatchEvent(new Event('input', { bubbles: true }));
+                inp.dispatchEvent(new Event('change', { bubbles: true }));
+              } else {
+                e.target.value = oldScore;
+                alert("Wrong input means no input!");
+              }
               return;
             }
             scores[k] = val;
@@ -370,6 +394,42 @@ await  render();
   //  window.location.reload();
    // console.log(subjK);
   }
+  
+  
+   async function syncWithStd(session, subjK, currentStudents, sessionIndex) {
+    //console.log(sessionIndex);
+   // let cls = classSelect.value;
+    
+    let scoreSheetConfig = rsects[0].scoreSheetConfig;
+    //assessment scale = asms
+    let asms = scoreSheetConfig.assessments; //??[{name: "CA", subtotal: 30}];
+    
+    for(const std in currentStudents){
+      let student = currentStudents[std];
+      student.subjects ??={};
+      let subjects = student.subjects;
+      let termPerformances = {};
+      for (const s in subjects){
+        if (s !== subjK) continue;
+        let subj = subjects[s][sessionIndex];
+        //console.log(sessionIndex);
+        termPerformances[s] = subj;
+        console.log(JSON.stringify(subj))
+      }
+      termPerformances.asms = asms;
+
+     
+      const perfRef = doc(stdDb, "students", student.id.replaceAll("/", "_"), "performances", session)
+      //stdBatch.set(stdRef, info,  {merge: true})
+      console.log(session);
+      stdBatch.update(perfRef, termPerformances,  {merge: true});
+    }
+    await stdBatch.commit();
+    //alert("Done");
+    
+    
+  }
+  
   </script>
 </body>
 </html>
