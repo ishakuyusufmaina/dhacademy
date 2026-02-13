@@ -1,4 +1,4 @@
-const studentConfig =  {
+const studentsConfig =  {
   apiKey: "AIzaSyAh1dfz_La25h9EQ8SwSkq9WCRrBAaNpoM",
   authDomain: "dh-students.firebaseapp.com",
   projectId: "dh-students",
