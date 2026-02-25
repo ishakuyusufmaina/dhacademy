@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -245,13 +245,13 @@ footer small {
     <small>©Mainafly 2026</small>
   </footer>
     
-   <script src="config.js"></script>
+  
  <script src="batch2.js"></script>
-
+ <script src="config.js"></script>
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
-  import {getFirestore, doc, setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getFirestore, query, where, collection, getDocs, doc, setDoc, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
   import {getAuth, createUserWithEmailAndPassword, updateProfile, deleteUser, onAuthStateChanged, signInWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
      //import {getDatabase, set, ref, onValue, child, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
         
@@ -267,12 +267,40 @@ h1.innerHTML = schoolName;
       const auth = getAuth(app);
   const db = getFirestore(app);
   
+    const stdApp = initializeApp(studentsConfig, "std"); 
+  const stdDb = getFirestore(stdApp);
+
+  
   let teachersRef = doc(db, schoolId, "teachers");
   let teacherDoc; //  await getDoc(teachersRef);
    let teachers; // teacherDoc.exists()? teacherDoc.data() : null;
      
       loginBtn.textContent = "Login";
   var schoolGeneratedUsername;
+  
+  
+   async function signInAsStd(){
+    //logBtnS.textContent = "Logging..";
+      const id = document.getElementById("email").value;
+      const pin = document.getElementById("password").value;
+
+    let q = query(
+    collection(stdDb, "students"),
+    where("pin", "==", Number(pin)),
+    where("id", "==", id)
+    );
+    let docs = await getDocs(q);
+    let std;
+    docs.forEach(doc=>{
+      std = doc.data()
+    });
+    if (std) {
+      window.localStorage.setItem("id", std.id);
+      window.location.href = "student.html";
+    } else {
+      alert("Wrong login credential. Meet your form master/class teacher for your ID and login PIN");
+    }
+  }
   
  async function onLoginSuccess(user, role) {
   
@@ -320,28 +348,7 @@ h1.innerHTML = schoolName;
   let reg = /.*@/;
 
 
-  async function signInAsStd(){
-    //logBtnS.textContent = "Logging..";
-      const id = document.getElementById("email").value;
-      const pin = document.getElementById("password").value;
-
-    let q = query(
-    collection(stdDb, "students"),
-    where("pin", "==", Number(pin)),
-    where("id", "==", id)
-    );
-    let docs = await getDocs(q);
-    let std;
-    docs.forEach(doc=>{
-      std = doc.data()
-    });
-    if (std) {
-      window.localStorage.setItem("id", std.id);
-      window.location.href = "student.html";
-    } else {
-      alert("Wrong login credential. Meet your form master/class teacher for your ID and login PIN");
-    }
-  }
+ 
   
   async function signIn() {
       logBtn.textContent = "Logging..";
