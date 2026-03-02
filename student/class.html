@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Class</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 30px;
+        background: #f5f5f5;
+    }
+    .container {
+        max-width: 700px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    label {
+        font-weight: bold;
+        margin-top: 15px;
+        display: block;
+    }
+    select, input, .assessment, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    .assessment {
+        
+        white-space: pre-wrap; /* PRESERVES SPACES & NEWLINES */
+        font-family: monospace;
+        border-left: 4px solid #0066ff;
+        padding-left: 2px;
+    }
+
+    button {
+        background: #0066ff;
+        color: white;
+        cursor: pointer;
+        margin-top: 20px;
+        font-size: 18px;
+    }
+    button:hover {
+        background: #004bcc;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+            <label id="std"></label>
+    <label id="stdId"></label>
+    
+    <select id="subject">
+        <option value="">Select Subject</option>
+       
+    </select>
+    </div>
+    <hr>
+<div class="container">
+  <div id="content" placeholder="Write your assessment here..."></div>
+  <button id="understoodBtn">Understood</button>
+</div>
+
+  <script src="../config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+    import { getFirestore, limit, writeBatch, arrayUnion, orderBy, where, query, getCountFromServer, collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+   const stdApp = initializeApp(studentsConfig);
+  var contentId;
+  const app = initializeApp(firebaseConfig, "school");
+    getAnalytics(app);
+
+    //const auth = getAuth(app);
+    const db = getFirestore(app);
+    const stdDb = getFirestore(stdApp);
+    const batch = writeBatch(stdDb);
+    const cls = window.localStorage.getItem("class");
+    const subj = window.localStorage.getItem("subject");
+    const student = JSON.parse(window.localStorage.getItem("student"));
+    subject.innerHTML = `<option data-class="${cls}" data-subject="${subj}">${subj} - ${cls}</option>`;
+    std.innerHTML = student.name.toUpperCase();
+    stdId.innerHTML = student.id;
+     subject.onchange = async e=>{
+         let i = document.getElementById("subject").selectedIndex;
+        // if (!i) return;
+        let className = document.getElementById("subject").options[i].dataset.class.toLowerCase();
+        let subjectName = document.getElementById("subject").options[i].dataset.subject.toLowerCase();
+        let d = await getLastDocument(className, subjectName);
+        content.innerHTML = convertToHTML(d.data().content);
+        contentId = d.id;
+       // console.log(contentId);
+         
+         const q = query(
+           collection(stdDb, "learnedContents"),
+           where("studentId", "==", student.id),
+           where("class", "==", className),
+           where("subject", "==", subjectName),
+           where("contentId", "==", contentId)
+         );
+         console.log(student.id, className, subjectName, contentId);
+         //let lcDocRef = doc(stdDb, "learnedContents", contentId);
+         let inputs = Array.from(document.querySelectorAll(".assessment input"));
+         const answers = inputs.map(inp=> inp.value);
+         let lcDocs = (await getDocs(q));
+         let lcDoc = null;
+         lcDocs.forEach(d=>{
+             lcDoc = d;
+         })
+         console.log(lcDoc);
+         if (lcDoc){
+           inputs.forEach((inp, i)=> {
+               inp.value = lcDoc.data().performance[i];
+               inp.disabled = true
+           });
+           understoodBtn.remove();
+         } else { }
+              
+         
+     }
+    subject.dispatchEvent(new Event("change"));
+    
+   
+      // ---- AUTH & SECTION LOAD ----
+    
+
+understoodBtn.onclick = async e=>{
+    //lc => learned content
+    let lcDocRef = doc(collection(stdDb, "learnedContents"));
+    let inputs = Array.from(document.querySelectorAll(".assessment input"));
+    const answers = inputs.map(inp=> inp.value);
+   // let lcDocRef = doc();
+    const lc = {
+        performance: answers,
+        contentId,
+        timestamp: serverTimestamp(),
+        studentId: student.id,
+        studentName: student.name,
+        class: cls.toLowerCase(),
+        subject: subj.toLowerCase()
+    }
+    batch.set(lcDocRef, lc);
+    batch.update(doc(stdDb, "attendance", contentId), {students: arrayUnion(student.id)});
+    await batch.commit();
+    understoodBtn.remove();
+    inputs.forEach(inp=> inp.disabled = true);
+    alert("Well done!");
+} 
+
+    
+    function convertToHTML(content) {
+    // 1. Convert headings
+    content = content.replace(/^(\#{1,6})\s*(.+)$/gm, (match, hashes, text) => {
+        const level = hashes.length;
+        return `<h${level}>${text}</h${level}>`;
+    });
+
+    // 2. Convert assessment blocks
+    content = content.replace(/--\s*\n([\s\S]+?)\n--/g, (match, inner) => {
+        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });
+        
+   // 2. Convert assessment blocks
+    content = content.replace(/-\s*\n([\s\S]+?)\n-/g, (match, inner) => {
+        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });
+
+    // 3. Convert {{}} to input fields (innermost first)
+    const inputRegex = /\{\{([^\{\}]*)\}\}/g;
+    while (inputRegex.test(content)) {
+        content = content.replace(inputRegex, (match, inner) => {
+            const width = inner.length || 1;
+            return `<input style="width:${width}ch">`;
+        });
+    }
+
+    return content;
+}
+
+// Example usage
+const input = `
+# Heading 1
+## Heading 2
+
+---
+This is sub content
+---
+
+Fill in: {{answer}}
+`;
+
+console.log(convertToHTML(input));
+    
+    
+
+
+async function getLastDocument(className, subjectName) {
+    console.log("getLastFunction: ", className, subjectName);
+  const q = query(
+    collection(db, schoolId, "db", "contents"),
+    where("class", "==", className),
+    where("subject", "==", subjectName),
+   // where("status", "==", "ongoing"),
+    orderBy("timestamp", "desc"),
+    limit(1)
+  );
+
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) {
+    return querySnapshot.docs[0]; //.data(); // returns the last document data
+  } else {
+    return null; // no matching documents
+  }
+}
+
+// Example usage
+//getLastDocument("Class A", "Math").then(doc => console.log(doc));
+</script>
+
+</body>
+</html>

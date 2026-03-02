@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Previous Classes</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 30px;
+        background: #f5f5f5;
+        position: relative;
+    }
+    .container {
+        max-width: 700px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    label {
+        font-weight: bold;
+        margin-top: 15px;
+        display: block;
+    }
+    select, input, .assessment, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    .assessment {
+        
+        white-space: pre-wrap; /* PRESERVES SPACES & NEWLINES */
+        font-family: monospace;
+        border-left: 4px solid blue;
+        padding-left: 2px;
+    }
+
+    button {
+        background: #0066ff;
+        color: white;
+        cursor: pointer;
+        margin-top: 20px;
+        font-size: 18px;
+    }
+    button:hover {
+        background: #004bcc;
+    }
+    .invisible {
+  visibility: hidden;
+}
+    #end {
+        background-color: #ff4d4f; /* red color for end/stop */
+  color: white;             
+    }
+    
+    .status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Ongoing status */
+.ongoing {
+  background: linear-gradient(135deg, #36d1dc, #5b86e5); /* teal to blue gradient */
+}
+
+/* Ended status */
+.ended {
+  background: linear-gradient(135deg, #ff6a6a, #ff4d4f); /* pinkish red gradient */
+}
+
+/* Optional: subtle hover effect */
+.status:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+    
+    #attendance {
+  color: #2d9cdb; /* nice blue */
+  text-decoration: none; /* remove default underline */
+  font-weight: 500;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+/* Animated underline on hover */
+#attendance::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background-color: #2d9cdb;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+#attendance:hover {
+  color: #1b6fa8; /* slightly darker blue */
+}
+
+#attendance:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+    .input-container {
+        position: relative;
+        display: inline-block;
+        
+    }
+    .input-container select {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        display: inline-block;
+    }
+    .input-container select:hover {
+        opacity: 1;
+    }
+    input.correct {
+        color: white;
+        background: green;
+    }
+    input.wrong {
+        color: white;
+        background: red;
+    }
+    
+    .std-header {
+        //position: sticky;
+        //top: 0;
+        background: rgb(230,230,230);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        border-radius: 8px;
+        padding: 8px;
+    }
+    h1{
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+  <h1>Class Line</h1>
+  <div id="std" class="container">
+     
+    
+  </div>
+  <hr>
+  
+ 
+  <div id="containers">
+  </div>
+  <hr>
+  <div class="container">
+    
+
+  </div>
+
+  <script src="../config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+    import { getFirestore, increment, writeBatch, limit, orderBy, where, query, getCountFromServer, updateDoc, collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    const stdApp = initializeApp(studentsConfig, "student");
+    const stdDb = getFirestore(stdApp);
+
+ 
+var teacher;
+      // ---- AUTH & SECTION LOAD ----
+    //onAuthStateChanged(auth, async user => {
+     // if (!user) return;
+      //alert()
+      const params = new URLSearchParams(window.location.search);
+      const student = JSON.parse(window.localStorage.getItem("student"));
+      const cls = params.get("class").toLowerCase().trim();
+      const subject = params.get("subject").toLowerCase();
+      console.log(cls, "-", subject, "-", student.id);
+      let q = query(
+         collection(stdDb, "learnedContents"),
+         where("class", "==", cls),
+         where("studentId", "==", student.id),
+         where("subject", "==", "basic coding using python"),
+         orderBy("timestamp", "desc")
+      );
+        
+      std.innerHTML = `
+        <header class="std-header">
+         <div>${student.name.toUpperCase()}</div>
+         <div>${student.id.toUpperCase()}</div>
+         <div>${cls.toUpperCase()}</div>
+         <div>${subject.toUpperCase()}</div>
+         </header>
+        `
+      const submissionsDocs = await getDocs(q);
+      console.log(submissionsDocs.empty);
+     submissionsDocs.forEach(async d=>{
+        let data = d.data();
+         data.marks ??=[];
+         console.log(8)
+         let score = data.marks.filter(mark=> mark=="correct").length;
+         const contentDoc = await getDoc(doc(db, schoolId, "db", "contents", data.contentId));
+        const batch = writeBatch(stdDb);
+        let contData = contentDoc.data();
+        const stdSafeId = data.studentId.replaceAll("/", "_");
+      //  console.log(JSON.stringify(data));
+        let container = document.createElement("div");
+        container.classList.add("container");
+        container.innerHTML = `
+         
+         <div class="content">${convertToHTML(contData.content)}</div>
+          <label> ${score} / ${data.marks.length}</label>
+          <label>${data.comment || ""}</label>
+          <hr>
+          <small>${data.timestamp.toDate()}</small>
+        `;
+          
+          console.log(data.comment);
+         const inputs = Array.from(container.querySelectorAll(".content .assessment input"))
+        inputs.forEach((inp, i)=>{
+        
+            inp.value = data.performance[i];
+            inp.disabled = true;
+            const inpCont = document.createElement("div");
+            const markSelect = document.createElement("select");
+            markSelect.classList.add("mark");
+            markSelect.innerHTML = `
+              <option value="">-select mark-</option>
+              <option value="correct">Correct</option>
+              <option value="wrong">Wrong</option>
+            `;
+            inp.replaceWith(inpCont);
+            inpCont.append(inp, markSelect);
+            inpCont.classList.add("input-container");
+            markSelect.onchange = e=>{
+                Array
+                .from(markSelect.children)
+                .forEach(opt=> inp.classList.remove(opt.value || "empt"));
+                inp.classList.add(markSelect.value);
+            }
+            markSelect.remove();
+            if (data.marks) {
+                markSelect.remove();
+               // container.querySelector(".comment").disabled = true;
+                let mark = data.marks[i];
+                if (mark) inp.classList.add(mark);
+            }
+        })
+         // const sendBtn = container.querySelector(".send");
+        //  if (data.marks) sendBtn.remove()
+          let hr = document.createElement("hr");
+          containers.append(container, hr);
+        
+      })
+      
+             
+   // });
+
+ 
+
+    
+    function convertToHTML(content) {
+    // 1. Convert headings
+    content = content.replace(/^(\#{1,6})\s*(.+)$/gm, (match, hashes, text) => {
+        const level = hashes.length;
+        return `<h${level}>${text}</h${level}>`;
+    });
+
+
+        // 2. Convert assessment blocks
+    content = content.replace(/--\s*\n([\s\S]+?)\n--/g, (match, inner) => {
+        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });
+            // 2. Convert assessment blocks
+    content = content.replace(/-\s*\n([\s\S]+?)\n-/g, (match, inner) => {
+        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });
+
+    // 3. Convert {{}} to input fields (innermost first)
+    const inputRegex = /\{\{([^\{\}]*)\}\}/g;
+    while (inputRegex.test(content)) {
+        content = content.replace(inputRegex, (match, inner) => {
+            const width = inner.length || 1;
+            return `<input style="width:${width}ch">`;
+        });
+    }
+
+    return content;
+}
+
+// Example usage
+const input = `
+# Heading 1
+## Heading 2
+
+---
+This is sub content
+---
+
+Fill in: {{answer}}
+`;
+
+//console.log(convertToHTML(input));
+    
+    
+
+
+async function getLastDocument(className, subjectName) {
+  const q = query(
+    collection(db, schoolId, "db", "contents"),
+    where("class", "==", className),
+    where("subject", "==", subjectName),
+    orderBy("timestamp", "desc"),
+    limit(1)
+  );
+
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) {
+    return querySnapshot.docs[0]; //.data(); // returns the last document data
+  } else {
+    return null; // no matching documents
+  }
+}
+
+// Example usage
+//getLastDocument("Class A", "Math").then(doc => console.log(doc));
+</script>
+
+</body>
+</html>
