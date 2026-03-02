@@ -296,15 +296,13 @@ h1.innerHTML = schoolName;
     });
     if (std) {
       window.localStorage.setItem("id", std.id);
-      window.location.href = "student.html";
+      window.location.href = "studentV1_1.html";
     } else {
       alert("Wrong login credential. Meet your form master/class teacher for your ID and login PIN");
     }
   }
   
  async function onLoginSuccess(user, role) {
-  
-   
    if (!teachers[schoolGeneratedUsername]){
      if (!(user.email=="dev@teacher."+schoolId)){
     // await deleteUser(user);
