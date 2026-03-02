@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Assessment Generator</title>
+<style>
+// 2. Convert assessment blocks
+    content = content.replace(/--\s*\n([\s\S]+?)\n--/g, (match, inner) => {
+// 2. Convert assessment blocks
+    content = content.replace(/--\s*\n([\s\S]+?)\n--/g, (match, inner) => {
+        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });    body {
+        font-family: Arial, sans-serif;
+        margin: 30px;
+        background: #f5f5f5;
+    }
+    .container {
+        max-width: 700px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    label {
+        font-weight: bold;
+        margin-top: 15px;
+        display: block;
+    }
+    select, input, textarea, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    textarea {
+        
+        white-space: pre-wrap; /* PRESERVES SPACES & NEWLINES */
+        font-family: monospace;
+    }
+    #content {
+        height: 200px;
+    }
+    button {
+        background: #0066ff;
+        color: white;
+        cursor: pointer;
+        margin-top: 20px;
+        font-size: 18px;
+    }
+    button:hover {
+        background: #004bcc;
+    }
+    
+    a {
+  color: #0b71ff;
+  text-decoration: none;
+  font-weight: 500;
+        display: inline-block;
+       margin-bottom: 10px;
+}
+
+ a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a href="preview.html">Class Control</a>
+    <h2>Class Content</h2>
+    <!--label>Class</label>
+    <select id="class">
+        <option value="">Select Class</option>
+        <option>JSS1</option>
+        <option>JSS2</option>
+        <option>JSS3</option>
+        <option>SS1</option>
+        <option>SS2</option>
+        <option>SS3</option>
+    </select -->
+    <select id="sessionSelect" disabled>
+      <option> -select session- </option>
+    </select>
+    <label>Subject - Class</label>
+    <select id="subject">
+        <option value="">Select Subject</option>       
+    </select>
+  
+    <label>Content</label>
+    <textarea id="content" placeholder="Create your class..."></textarea>
+
+    <button id="save">Save</button>
+</div>
+
+  <script src="../config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+    import { getFirestore, getCountFromServer, collection, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    const terms = ["first term", "second term", "third term"];
+
+    let sessionsRef = doc(db, schoolId, "sessions");
+  //let studentsRef = doc(db, schoolId, "classes");
+  const sessionsDoc = await getDoc(sessionsRef);
+  var sessionIndex;
+  var currentSession;
+  if (sessionsDoc.exists()){      
+     let sessions = sessionsDoc.data().sessions      
+     sessions =  sessions.sort((a, b)=>b.no - a.no);
+    sessions.forEach((session, i)=>{
+      let year = session.year;
+      let opt = document.createElement("option");
+      opt.innerHTML = year + ", " + terms[session.term];
+      sessionSelect.appendChild(opt);
+        opt.dataset.index = i;
+        if (i==0){
+            opt.selected = true;           
+            sessionIndex = session.term; 
+            currentSession = session;
+        }
+       
+    });
+      
+      //sessionSelect.firstChild.nextElementSibling.selected = true;
+  }
+  
+
+ 
+var teacher;
+      // ---- AUTH & SECTION LOAD ----
+    onAuthStateChanged(auth, async user => {
+      if (!user) return;
+
+      const teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
+      const teachers = teachersDoc.data();
+     
+      const id = user.email.replace(/@.*/, "");
+      teacher = teachers[id];
+       subject.innerHTML = "<option value=''>-select Subject - Class-</option>";
+      for (const subj in teacher.load){
+        let classes = teacher.load[subj];
+        classes.forEach(cls=>{
+            let opt = new Option(subj + " - "+cls);
+            opt.dataset.class = cls;
+            opt.dataset.subject = subj;
+            subject.append(opt);
+            let lsubj = window.localStorage.getItem("subject")?.toLowerCase();
+            let lclass = window.localStorage.getItem("class")?.toLowerCase();
+            opt.selected = (lsubj == subj.toLowerCase() && lclass==cls.toLowerCase()) 
+        })
+        
+      }
+     
+    });
+
+ save.onclick = e=>saveAssessment();
+async function saveAssessment() {
+    let i = document.getElementById("subject").selectedIndex;
+    if (!i) return;
+    const data = {
+        class: document.getElementById("subject").options[i].dataset.class.toLowerCase(),
+        subject: document.getElementById("subject").options[i].dataset.subject.toLowerCase(),
+        //topic: document.getElementById("topic").value,
+        content: document.getElementById("content").value,
+        timestamp: serverTimestamp(),
+        teacher: teacher.name,
+        term: currentSession.term,
+        session: currentSession.year.trim().replaceAll(" ", "")
+       // instruction: instruction.value
+    };
+    let docRef = doc(collection(db, schoolId, "db", "contents"));
+    await setDoc(docRef, data);
+
+    console.log("Saving assessment:", data);
+
+    // TODO: save 'data' to Firestore
+    // Example:
+    // await addDoc(collection(db, "assessments"), data);
+
+    alert("Saved!");
+}
+    
+    function convertToHTML(content) {
+    // 1. Convert headings
+    content = content.replace(/^(\#{1,6})\s*(.+)$/gm, (match, hashes, text) => {
+        const level = hashes.length;
+        return `<h${level}>${text}</h${level}>`;
+    });
+
+    // 2. Convert assessment blocks
+    content = content.replace(/---\s*\n([\s\S]+?)\n---/g, (match, inner) => {
+        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });
+
+    // 3. Convert {{}} to input fields (innermost first)
+    const inputRegex = /\{\{([^\{\}]*)\}\}/g;
+    while (inputRegex.test(content)) {
+        content = content.replace(inputRegex, (match, inner) => {
+            const width = inner.length || 1;
+            return `<input style="width:${width}ch">`;
+        });
+    }
+
+    return content;
+}
+
+// Example usage
+const input = `
+# Heading 1
+## Heading 2
+
+---
+This is sub content
+---
+
+Fill in: {{answer}}
+`;
+
+console.log(convertToHTML(input));
+</script>
+
+</body>
+</html>

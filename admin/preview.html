@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Assessment Generator</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 30px;
+        background: #f5f5f5;
+    }
+    .container {
+        max-width: 700px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    label {
+        font-weight: bold;
+        margin-top: 15px;
+        display: block;
+    }
+    select, input, .assessment, .example, button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    .assessment, .example {
+        
+        white-space: pre-wrap; /* PRESERVES SPACES & NEWLINES */
+        font-family: monospace;
+        border-left: 4px solid blue;
+        padding-left: 2px;
+    }
+
+    button {
+        background: #0066ff;
+        color: white;
+        cursor: pointer;
+        margin-top: 20px;
+        font-size: 18px;
+    }
+    button:hover {
+        background: #004bcc;
+    }
+    .invisible {
+  display: none;
+}
+    #end {
+        background-color: #ff4d4f; /* red color for end/stop */
+  color: white;             
+    }
+    
+    .status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Ongoing status */
+.ongoing {
+  background: linear-gradient(135deg, #36d1dc, #5b86e5); /* teal to blue gradient */
+}
+
+/* Ended status */
+.ended {
+  background: linear-gradient(135deg, #ff6a6a, #ff4d4f); /* pinkish red gradient */
+}
+
+/* Optional: subtle hover effect */
+.status:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+    
+    #attendance {
+  color: #2d9cdb; /* nice blue */
+  text-decoration: none; /* remove default underline */
+  font-weight: 500;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+/* Animated underline on hover */
+#attendance::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background-color: #2d9cdb;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+#attendance:hover {
+  color: #1b6fa8; /* slightly darker blue */
+}
+
+#attendance:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+    
+    /* Links inside list items */
+    a {
+  color: #0b71ff;
+  text-decoration: none;
+  font-weight: 500;
+        display: inline-block;
+       margin-bottom: 10px;
+}
+
+ a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+    <a href="assessment.html">+New Class</a>
+
+<h1>Pre-stage Class</h1>
+    <div class="container">
+    
+
+    
+    <div id="attendance"></div>
+    <hr>
+    <div id="statusElm"></div>
+   
+    <select id="subject">
+        <option value="">Select Subject</option>
+       
+    </select>
+</div>
+    <hr>
+     <h2>Content</h2>
+    <div class="container">
+       
+   
+    <div id="content" placeholder="Write your assessment here..."></div>
+
+</div>
+    <hr>
+    <div class="container">
+        <button id="save">Save</button>
+          <button id="start">
+        Start
+    </button>
+    <button id="end">
+        End
+    </button>
+    </div>
+
+  <script src="../config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+    import { getFirestore, limit, orderBy, where, query, getCountFromServer, updateDoc, collection, doc, setDoc, getDocs, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    const stdApp = initializeApp(studentsConfig, "student");
+    const stdDb = getFirestore(stdApp);
+
+ 
+var teacher;
+      // ---- AUTH & SECTION LOAD ----
+    onAuthStateChanged(auth, async user => {
+      if (!user) return;
+
+      const teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
+      const teachers = teachersDoc.data();
+     
+      const id = user.email.replace(/@.*/, "");
+      teacher = teachers[id];
+       subject.innerHTML = "<option value=''>-select Subject - Class-</option>";
+      for (const subj in teacher.load){
+        let classes = teacher.load[subj];
+        classes.forEach(cls=>{
+            let opt = new Option(subj + " - "+cls);
+            opt.dataset.class = cls;
+            opt.dataset.subject = subj;
+            subject.append(opt);
+            let lsubj = window.localStorage.getItem("subject")?.toLowerCase();
+            let lclass = window.localStorage.getItem("class")?.toLowerCase();
+            opt.selected = (lsubj == subj.toLowerCase() && lclass==cls.toLowerCase()) 
+     
+        })
+        
+      }
+     subject.onchange = async e=>{
+         let i = document.getElementById("subject").selectedIndex;
+         if (!i) return;
+        let className = document.getElementById("subject").options[i].dataset.class.toLowerCase();
+        let subjectName = document.getElementById("subject").options[i].dataset.subject.toLowerCase();
+        let d = await getLastDocument(className, subjectName);
+         if (!d) return;
+         content.innerHTML = convertToHTML(d.data().content);
+         let inputs = content.querySelectorAll(".assessment input");
+         if (d.data().answers) inputs.forEach((inp, i)=> inp.value = d.data().answers[i]);
+         console.log(d.data().status);
+         let ref = doc(stdDb, "attendance", d.id);
+         let attDoc = await getDoc(ref);
+        // let count =  countDoc.data().count;
+       //  let ref  = doc(stdDb, "attendance", d.id);
+         save.onclick = async e=>{
+             let inputs = Array.from(content.querySelectorAll(".assessment input"));
+             let answers = inputs.map(inp=>inp.value);
+             await updateDoc(doc(db, schoolId, "db", "contents", d.id), {answers});
+             alert("saved");
+         }
+         if (!attDoc.exists()) {
+             end.classList.add("invisible");
+             start.onclick = async e=>{
+                const data = {
+                     contentId: d.id,
+                     students: [],
+                     startedAt: serverTimestamp(),
+                     status: "ongoing",
+                     startedBy: auth.currentUser.email,
+                     class: className,
+                     subject: subjectName,
+                     classworkCount: Array.from(inputs).length,
+                     term: d.data().term,
+                     session: d.data().session
+                 };
+                 await setDoc(ref, data);
+                 start.classList.add("invisible");
+                 end.classList.remove("invisible");
+             }
+         } else {
+             start.classList.add("invisible");
+             save.remove();
+             let attends = attDoc.data();
+             statusElm.innerHTML = `<span class="status ${attends.status}"> ${attends.status}</span>`;
+             attendance.innerHTML = `${"Attendance: " + attends.students.length}`;
+             attendance.onclick = e=>{
+               window.localStorage.setItem("classId", d.id);
+               window.location.href =  "submissions.html"                
+             }
+             end.onclick = async e=>{
+               await updateDoc(ref, {
+                   status: "ended",
+                   endedAt: serverTimestamp(),
+                   endedBY: auth.currentUser.email
+               });
+                 
+               end.classList.add("invisible");
+                 statusElm.classList.add("ended");
+                 statusElm.classList.remove("ongoing");
+             }
+             if (attends.status=="ended")
+             end.remove();
+         }
+         
+     }
+        subject.dispatchEvent(new Event("change"));
+ 
+    });
+
+    
+async function saveAssessment() {
+    let i = document.getElementById("subject").selectedIndex;
+    if (!i) return;
+    const data = {
+        class: document.getElementById("subject").options[i].dataset.class.toLowerCase(),
+        subject: document.getElementById("subject").options[i].dataset.subject.toLowerCase(),
+        //topic: document.getElementById("topic").value,
+        content: document.getElementById("content").value,
+        timestamp: serverTimestamp(),
+        teacher: teacher.name
+       //instruction: instruction.value
+    };
+    let docRef = doc(collection(db, schoolId, "db", "contents"));
+    await setDoc(docRef, data);
+
+    console.log("Saving assessment:", data);
+
+    // TODO: save 'data' to Firestore
+    // Example:
+    // await addDoc(collection(db, "assessments"), data);
+
+    alert("Saved!");
+}
+    
+    
+    
+    function convertToHTML(content) {
+    // 1. Convert headings
+    content = content.replace(/^(\#{1,6})\s*(.+)$/gm, (match, hashes, text) => {
+        const level = hashes.length;
+        return `<h${level}>${text}</h${level}>`;
+    });
+
+    // 2. Convert assessment blocks
+    content = content.replace(/--\s*\n([\s\S]+?)\n--/g, (match, inner) => {
+        return `<div class="assessment">\n${inner.trim()}\n</div>`;
+    });
+        
+    // 3. Convert example blocks
+    content = content.replace(/-\s*\n([\s\S]+?)\n-/g, (match, inner) => {
+        return `<div class="example">\n${inner.trim()}\n</div>`;
+    });
+
+    // 4. Convert {{}} to input fields (innermost first)
+    const inputRegex = /\{\{([^\{\}]*)\}\}/g;
+    while (inputRegex.test(content)) {
+        content = content.replace(inputRegex, (match, inner) => {
+            const width = inner.length || 1;
+            return `<input style="width:${width}ch">`;
+        });
+    }
+
+    return content;
+}
+
+// Example usage
+const input = `
+# Heading 1
+## Heading 2
+
+---
+This is sub content
+---
+
+Fill in: {{answer}}
+`;
+
+console.log(convertToHTML(input));
+    
+    
+
+
+async function getLastDocument(className, subjectName) {
+  const q = query(
+    collection(db, schoolId, "db", "contents"),
+    where("class", "==", className),
+    where("subject", "==", subjectName),
+    orderBy("timestamp", "desc"),
+    limit(1)
+  );
+
+  const querySnapshot = await getDocs(q);
+  if (!querySnapshot.empty) {
+    return querySnapshot.docs[0]; //.data(); // returns the last document data
+  } else {
+    return null; // no matching documents
+  }
+}
+
+// Example usage
+//getLastDocument("Class A", "Math").then(doc => console.log(doc));
+</script>
+
+</body>
+</html>
