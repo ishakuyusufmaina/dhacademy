@@ -1,0 +1,274 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Class Point Leaderboard</title>
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --card-bg: #ffffff;
+      --bg: #f2f4f7;
+      --text-dark: #222;
+      --text-light: #555;
+    }body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-dark);
+  padding: 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+  .container:nth-child(1){
+    margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+  }
+
+h1, h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 26px;
+  color: var(--primary);
+}
+  h2 {font-size: 16px;}
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #eef3fb;
+  border-radius: 10px;
+}
+
+.meta div {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+table thead th {
+  background: var(--primary);
+  color: white;
+  padding: 10px;
+  font-size: 14px;
+  text-align: left;
+}
+
+table tbody tr:nth-child(even) { background: #f9f9f9; }
+
+table td {
+  padding: 10px;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+@media(max-width: 600px) {
+  table thead { display: none; }
+
+  table tr {
+    display: block;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  table td:last-child { border-bottom: none; }
+
+  table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: var(--text-light);
+  }
+}
+button {
+    padding: 10px 20px;
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+   // margin-top: 10px;
+    transition: background 0.3s ease;
+  }
+  
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Development Hub Academy</h1>
+  </div>
+  <div class="container">
+    <h2>CLASS POINT LEADERBOARD</h2>
+    <div class="meta">
+  
+  <!--div><strong>Section:</strong> <span id="section"></span></div-->
+  <div><strong><span id="clas"></span></strong></div>
+  <div><strong><span id="subject"></span></strong></div>
+  <div><strong><span id="session"></span></strong></div>
+  <div><strong> <span id="term"></span></strong></div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>SN</th>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Point</th>
+      <th>Position</th>
+      <th>Classworks</th>
+    </tr>
+  </thead>
+  <tbody id="studentTable"></tbody>
+</table>
+
+  </div> 
+  <script src="config.js"></script>
+   <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+  import {getFirestore, getAggregateFromServer, sum, getDocs, doc, setDoc, query, collection, where, getCountFromServer, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  
+  const app = initializeApp(studentsConfig);
+  const schApp = initializeApp(firebaseConfig, "school");
+  
+  const analytics = getAnalytics(app);
+ 
+  const db = getFirestore(app);
+  
+     var students = [
+      { id: "ST123", name: "John Doe", point: 85 },
+      { id: "ST356", name: "Mary Chris", point: 92 },
+      { id: "ST891", name: "James Kite", point: 78 },
+      { id: "ST222", name: "Rose Mark", point: 95 },
+    ];
+  let participants = window.localStorage.getItem("participants");
+  if (participants) {
+    students = JSON.parse(participants);
+  } else { //if not retrieve and process into above students
+    let cls = window.localStorage.getItem("class");
+    let subj = window.localStorage.getItem("subject");
+    let t = window.localStorage.getItem("term");
+    let ses = window.localStorage.getItem("session");
+   let classPointSummaries = []
+    const sumQ = query(
+          collection(db, "performanceSummaries"),
+          where("session", "==", ses.replaceAll(" ", "" )),
+          where("term", "==", t+""),
+          where("class", "==", cls.toLowerCase()),
+          where("subject", "==", subj.toLowerCase())         
+        )
+        let summaryDocs = await getDocs(sumQ);
+        //let summaryDoc = await getDoc(pRef);
+        let indexOfCurrent;
+        summaryDocs.forEach((d, i)=>{
+          let data = d.data();
+          data.totalMarks =100;
+          data.sc = 100;
+          data.score = data.correct;
+          data.point = data.correct
+          classPointSummaries.push(data);
+        });
+      assignPositions(classPointSummaries);
+      students = classPointSummaries;
+  }
+ 
+const terms = ["first term", "second term", "third term"];
+
+   // students.sort((a, b) => b.point - a.point);
+  //  students.forEach((s, i) => s.position = i + 1);
+
+    const tbody = document.getElementById("studentTable");
+
+    students.forEach((s, i) => {
+      clas.innerHTML = s.class.toUpperCase();
+      session.innerHTML = s.session.toUpperCase();
+      term.innerHTML = terms[s.term].toUpperCase();
+      subject.innerHTML = s.subject.toUpperCase();
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td data-label="SN">${i + 1}</td>
+        <td data-label="ID">${s.studentId}</td>
+        <td data-label="Name">${s.studentName.toUpperCase()}</td>
+        <td data-label="Point">${s.score}</td>
+        <td data-label="Position">${s.position}</td>
+        <td class="cw" data-label="Classworks"><button>View Classworks</button></td>
+      `;
+      row.querySelector(".cw button")
+      .onclick = e=>{
+        let std = {name: s.studentName, id: s.studentId};
+        window.localStorage.setItem("student", JSON.stringify(std));
+        window.location.href=`student/classes.html?class=${s.class}&subject=${s.subject}`;
+      }
+      tbody.appendChild(row);
+    });
+  
+  function assignPositions(students) {
+  // Defensive: ensure score and sc numeric
+  students.forEach(s => {
+    s.score = Number(s.score) || 0;
+    s.sc = Number(s.sc) || 0;
+  });
+
+  // Compute average guardedly (students with sc===0 go to the end)
+  students.sort((a, b) => {
+    const aAvg = a.sc > 0 ? (a.score / a.sc) : -Infinity;
+    const bAvg = b.sc > 0 ? (b.score / b.sc) : -Infinity;
+    // sort descending by average, and if tie, fall back to total score descending
+    if (bAvg === aAvg) return Number(b.score) - Number(a.score);
+    return bAvg - aAvg;
+  });
+
+  // Assign positions with tie-handling using tolerance
+  const EPS = 1e-9;
+  let currentPosition = 0;
+  let lastAvg = null;
+  let lastPositionAssigned = 0;
+
+  students.forEach((student, idx) => {
+    currentPosition = idx + 1;
+    const avg = student.sc > 0 ? student.score / student.sc : -Infinity;
+
+    if (lastAvg !== null && Math.abs(avg - lastAvg) <= EPS) {
+      // tie -> same position as previous
+      student.position = lastPositionAssigned;
+    } else {
+      student.position = currentPosition;
+      lastPositionAssigned = currentPosition;
+      lastAvg = avg;
+    }
+
+    // Link prev/next for convenience (clear first to avoid stale refs)
+  //  student.prev = students[idx - 1] || null;
+    //student.next = students[idx + 1] || null;
+  });
+}
+  
+  </script></body>
+</html>

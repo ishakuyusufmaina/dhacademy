@@ -55,22 +55,23 @@
 }
 
 /* Links inside list items */
-#subjectsProgress a {
+#subjectsProgress a, #subjectsProgress .leaderboard {
   color: #0b71ff;
   text-decoration: none;
   font-weight: 500;
 }
 
-#subjectsProgress a:hover {
+#subjectsProgress a:hover, #subjectsProgress .leaderboard:hover {
   text-decoration: underline;
 }
+
     </style>
 </head>
 <body>
 
   <div class="dashboard">
     <div>
-      <button id="logout">Logout 🔒</button>
+      <button id="logout">Logout</button>
     </div>
     <hr>
     <!-- Student Info -->
@@ -89,7 +90,9 @@
         </label>
       </div>
     </div>
-
+  </div>
+  <hr>
+  <div class="dashboard">
     <!-- Academic Performance -->
     
     <div id="subjectsProgress"></div>
@@ -137,6 +140,7 @@
     };*/
 
  let section = student.section;
+  
 console.log(section);  
   sectionElm.textContent = section.toUpperCase();
 let sectDoc = await getDoc(doc(db, "sections", section));
@@ -163,6 +167,7 @@ section = sectDoc.exists()?  sectDoc.data() : {};
     // Build Performance Table
     // ---------------------------
     async function getSubjects(data) {
+      
       let stdSession = student.sessions.sort().reverse()[0];
       let year = stdSession.split(",")[0];
       let term = stdSession.split(",")[1].trim();
@@ -183,7 +188,8 @@ section = sectDoc.exists()?  sectDoc.data() : {};
         resolver=resolve
       });
       data.forEach(async (subject, i) => {
-        console.log(JSON.stringify(subjects));
+        //console.log(JSON.stringify(subjects));
+        const classPointSummaries =[];
         if (!subjects[subject.name]) return;
         let relMatching = relDict[subjects[subject.name].for.toLowerCase()];
         console.log(relMatching, student.religion)
@@ -249,12 +255,42 @@ section = sectDoc.exists()?  sectDoc.data() : {};
             "performanceSummaries",
              performanceSumKey,
          );
-        let summaryDoc = await getDoc(pRef);
-        totalCorrect = summaryDoc.exists()? summaryDoc.data().correct : totalCorrect;
+        const sumQ = query(
+          collection(db, "performanceSummaries"),
+          where("session", "==", year.replaceAll(" ", "" )),
+          where("term", "==", term+""),
+          where("class", "==", cls.toLowerCase()),
+          where("subject", "==", newSubjs[i].name.toLowerCase())         
+        )
+        let summaryDocs = await getDocs(sumQ);
+        //let summaryDoc = await getDoc(pRef);
+        let indexOfCurrent;
+        summaryDocs.forEach((d, i)=>{
+          let data = d.data();
+          data.totalMarks = totalMarks;
+          data.sc = totalMarks;
+          data.score = data.correct;
+          classPointSummaries.push(data);
+          if (data.studentId==student.id){
+            totalCorrect = data.correct;
+            indexOfCurrent = i;
+          }
+        })
+        //totalCorrect = summaryDoc.exists()? summaryDoc.data().correct : totalCorrect;
+        let currentSum = classPointSummaries[indexOfCurrent];
+        classPointSummaries.sort((a, b)=> (a.correct/a.totalMarks) - (b.correct/b.totalMarks));
+        assignPositions(classPointSummaries);
+       // let currentSum;
+        classPointSummaries.forEach((e, j)=> {currentSum= (e.studentId== student.id)? e : {}});
+        let position = currentSum.position;
+        console.log("l ", position, classPointSummaries.length);
+        //console.log(JSON.stringify(classPointSummaries));
         newSubjs[i].point = totalCorrect;
         newSubjs[i].totalMark = totalMarks;
         newSubjs[i].relPoint = totalCorrect/totalMarks;
-        console.log(i, JSON.stringify(newSubjs));
+        newSubjs[i].position = position;
+        newSubjs[i].participants = classPointSummaries;
+        console.log("position:" , position);
         await resolver(newSubjs);
       })
      await promise;
@@ -310,7 +346,7 @@ section = sectDoc.exists()?  sectDoc.data() : {};
     performances.push({name, scores, exam})
   }
   let subjs = await getSubjects(performances);
-  console.log(JSON.stringify(subjs));
+  //console.log(JSON.stringify(subjs));
   
   
  // window.localStorage.setItem("class", cls);
@@ -324,7 +360,9 @@ section = sectDoc.exists()?  sectDoc.data() : {};
     subjContainer.innerHTML += `
       <h3 class="subject">${subject.name}</h3>
       <ul>
-         <li>Classwork Point: ${subject.point}/${subject.totalMark}</li>
+         <li>Class Position: ${subject.position}</li>
+         <li class="leaderboard">Participants: ${subject.participants.length}</li>
+         <li>Class Point: ${subject.point}/${subject.totalMark}</li>
          <li><a href="student/classes.html?class=${classSelect.value}&subject=${subject.name}">Previous Classes: ${subject.attendedClass}/${subject.totalClasses} </a></li>
          <li><a href="student.html">Assessment: ${subject.assessment}</a></li>
       </ul>
@@ -342,6 +380,13 @@ section = sectDoc.exists()?  sectDoc.data() : {};
           console.log(subjElm.textContent);
       }
     }
+    subjContainer
+    .querySelector(".leaderboard")
+    .onclick = e=>{
+      window.localStorage.setItem("participants", JSON.stringify(subject.participants));
+      window.location.href = "leaderboard.html";
+
+    }
     subjectsProgress.append(subjContainer)
   })
   
@@ -354,6 +399,48 @@ section = sectDoc.exists()?  sectDoc.data() : {};
   return arr.filter(v => v === value).length;
 }
 
+  
+ function assignPositions(students) {
+  // Defensive: ensure score and sc numeric
+  students.forEach(s => {
+    s.score = Number(s.score) || 0;
+    s.sc = Number(s.sc) || 0;
+  });
+
+  // Compute average guardedly (students with sc===0 go to the end)
+  students.sort((a, b) => {
+    const aAvg = a.sc > 0 ? (a.score / a.sc) : -Infinity;
+    const bAvg = b.sc > 0 ? (b.score / b.sc) : -Infinity;
+    // sort descending by average, and if tie, fall back to total score descending
+    if (bAvg === aAvg) return Number(b.score) - Number(a.score);
+    return bAvg - aAvg;
+  });
+
+  // Assign positions with tie-handling using tolerance
+  const EPS = 1e-9;
+  let currentPosition = 0;
+  let lastAvg = null;
+  let lastPositionAssigned = 0;
+
+  students.forEach((student, idx) => {
+    currentPosition = idx + 1;
+    const avg = student.sc > 0 ? student.score / student.sc : -Infinity;
+
+    if (lastAvg !== null && Math.abs(avg - lastAvg) <= EPS) {
+      // tie -> same position as previous
+      student.position = lastPositionAssigned;
+    } else {
+      student.position = currentPosition;
+      lastPositionAssigned = currentPosition;
+      lastAvg = avg;
+    }
+
+    // Link prev/next for convenience (clear first to avoid stale refs)
+  //  student.prev = students[idx - 1] || null;
+    //student.next = students[idx + 1] || null;
+  });
+}
+  
 //console.log(countInArray([1,2,2,3,2], 2));  // 3
   </script>
 
