@@ -68,6 +68,9 @@
     <div id="subject">Subject: </div>
   </header>
   <div>
+    <a class="fw" id="leaderboard" >Leaderboard</a>
+  </div>
+  <div>
     <a class="fw" href="../../admin/assessment.html">Async Class</a>
   </div>
   <div>
@@ -133,6 +136,12 @@ let teachersRef = doc(db, schoolId, "teachers");
     let sessions =  sessionsDoc.data().sessions;
      sesion = sessions.sort((a, b)=>b.no - a.no)[0];
     session.innerHTML = sesion.year + ", " + terms[sesion.term];
+    window.localStorage.removeItem("participants");
+    window.localStorage.setItem("session", sesion.year);
+    console.log(sesion.year.toString());
+    window.localStorage.setItem("term", sesion.term);
+    
+    leaderboard.href="../../leaderboard.html";
       //sessionSelect.firstChild.nextElementSibling.selected = true;
   }
   
