@@ -265,6 +265,7 @@ var teacher;
               .filter(mark=>mark=="correct")
               .length;
               const performanceSumKey = (contData.session+contData.term+contData.class+contData.subject+stdSafeId).replaceAll("/", "_").replaceAll(" ", "");
+              console.log(data.studentName);
               batch.set(doc(
                  stdDb,
                  "performanceSummaries",
@@ -273,6 +274,7 @@ var teacher;
                 {
                     correct: increment(totalCorrect),
                     studentId: data.studentId,
+                    studentName: data.studentName,
                     subject: contData.subject,
                     class: contData.class,
                     session: contData.session,
@@ -286,7 +288,7 @@ var teacher;
               sendBtn.disabled = true;
               sendBtn.onclick = e=>{};
           }
-          containers.append(container);
+          containers.append(container, document.createElement("hr"));
         
       })
       const teachersDoc = await getDoc(doc(db, schoolId, "teachers"));
