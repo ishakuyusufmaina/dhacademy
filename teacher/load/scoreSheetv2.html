@@ -144,7 +144,7 @@
     }
   });
 
-  const schoolId = "capital";
+ // const schoolId = "capital";
   const terms = ["first term", "second term", "third term"];
   
   
@@ -179,7 +179,9 @@ await  render();
   
 
  async function render(){
+   console.log(schoolId);
    let sections = (await getDoc(doc(db, schoolId, "section"))).data();
+   console.log(JSON.stringify(sections));
     rsects = Object
    .values(sections)
    .filter(section=>{
