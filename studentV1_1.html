@@ -281,7 +281,7 @@ section = sectDoc.exists()?  sectDoc.data() : {};
         classPointSummaries.sort((a, b)=> (a.correct/a.totalMarks) - (b.correct/b.totalMarks));
         assignPositions(classPointSummaries);
        // let currentSum;
-        classPointSummaries.forEach((e, j)=> {currentSum= (e.studentId== student.id)? e : {}});
+        classPointSummaries.forEach((e, j)=> {if (e.studentId== student.id) currentSum = e });
         let position = currentSum.position;
         console.log("l ", position, classPointSummaries.length);
         //console.log(JSON.stringify(classPointSummaries));
