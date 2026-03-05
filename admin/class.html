@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>STUDENT</title>
-  <link rel="stylesheet" href="../styles/students.css">
+  <link rel="stylesheet" href="styles/students.css">
 </head>
 <body>
   <h1 id="head">Students</h1>
@@ -36,24 +36,16 @@
   <button id="init">Initilize Students</button>
   
   <iframe id="iframe"></iframe>
-  <script src="../../config.js"></script>
+  <script src="../config.js"></script>
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
   import {getFirestore, writeBatch, deleteDoc, getDocs, getCountFromServer, collection, query, where, updateDoc, arrayUnion, doc, setDoc, getDoc, runTransaction} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
   import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-      const firebaseConfig = {
-  apiKey: "AIzaSyCm_DSZaYVQCt0ubBwRkE9nOTryJayxH0w",
-  authDomain: "school-in-the-box.firebaseapp.com",
-  projectId: "school-in-the-box",
-  storageBucket: "school-in-the-box.firebasestorage.app",
-  messagingSenderId: "596350496353",
-  appId: "1:596350496353:web:84c66c351700ddf0824420",
-  measurementId: "G-3MGCDH4FRF"
-}; 
+      
   
   
-  const schoolId = "capital";
+  const schoolId = "dhacademy";
      // Replace with your Cloudinary details
   //const cloudName = "daktkkz2k"; // Replace with your Cloudinary cloud name
  // const uploadPreset = "passport"; // Replace with your unsigned preset
@@ -104,10 +96,10 @@
   let sectionRef = doc(db, schoolId, "section");
 let sectionDoc = await getDoc(sectionRef);
 var section;
-  /*head.ondblclick = e=>{
+  head.ondblclick = e=>{
     stdBatch = writeBatch(stdDb);
     init.click();
-  }*/
+  }
  onAuthStateChanged(auth, async user=>{ 
        if (!user) return;
       let id = user.email.replace(/@.*/, "");
@@ -115,15 +107,15 @@ var section;
        let teacher = teachers[id];
        if (sectionDoc.exists()){
            let sections = sectionDoc.data();
-           let hosSects = teacher.role.hos.sections;
+           let classes = teacher.adminFunctions.students.resources;
            let keys = Object.keys(sections);
-           hosSects.forEach(key=>{
+           keys.forEach(key=>{
                let optG = document.createElement("optgroup");
                optG.label = key;
-               let classes = sections[key].classes;
-               classes.forEach(clas=>optG.innerHTML +=`<option>${clas}</option>`);
+              let supClasses = sections[key].classes.filter(c=> classes.includes(c));
+               supClasses.forEach(clas=>optG.innerHTML +=`<option>${clas}</option>`);
                classSelect.append(optG);
-             classSelect.addEventListener("change", _=>{
+               classSelect.addEventListener("change", _=>{
                if (!classes.includes(classSelect.value)) return;
                section = key;
                console.log(section);
@@ -588,7 +580,7 @@ function isEqual(a, b) {
       console.log(key(sessionSelect.value));
       await setDoc(perfRef, termPerformances,  {merge: true});
     }
-   // await stdBatch.commit()
+   //await stdBatch.commit()
   
 // Example
 console.log(generate4DigitInteger()); // e.g. 4837
