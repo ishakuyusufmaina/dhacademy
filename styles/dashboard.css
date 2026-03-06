@@ -1,1 +1,111 @@
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
 
+    .dashboard {
+      max-width: 1000px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .student-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+    }
+
+    .student-info img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ddd;
+    }
+
+    .student-details h2 {
+      margin: 0 0 8px;
+    }
+
+    .student-details select {
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+
+    h3 {
+      margin-bottom: 15px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 6px;
+    }
+  
+  #performanceTable {
+    overflow: auto;
+  }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background: #f0f2f5;
+      font-weight: bold;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    
+    .subj-container, .subject {
+      position: relative;
+    }
+    .subject-name {
+      text-align: left;
+      font-weight: bold;
+    }
+  
+  button {
+    padding: 10px 20px;
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+  }
+  
+  .badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #e4002b;  /* red */
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+
+  position: absolute;   /* optional, for positioning on an icon */
+  top: -5px;
+  right: -5px;
+}
