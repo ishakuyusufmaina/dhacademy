@@ -277,12 +277,12 @@ section = sectDoc.exists()?  sectDoc.data() : {};
           }
         })
         //totalCorrect = summaryDoc.exists()? summaryDoc.data().correct : totalCorrect;
-        let currentSum = classPointSummaries[indexOfCurrent];
+        let currentSum = classPointSummaries[indexOfCurrent] || {};
         classPointSummaries.sort((a, b)=> (a.correct/a.totalMarks) - (b.correct/b.totalMarks));
         assignPositions(classPointSummaries);
-       // let currentSum;
+        //currentSum;
         classPointSummaries.forEach((e, j)=> {if (e.studentId== student.id) currentSum = e });
-        let position = currentSum.position;
+        let position = currentSum.position || "-";
         console.log("l ", position, classPointSummaries.length);
         //console.log(JSON.stringify(classPointSummaries));
         newSubjs[i].point = totalCorrect;
@@ -361,7 +361,7 @@ section = sectDoc.exists()?  sectDoc.data() : {};
       <h3 class="subject">${subject.name}</h3>
       <ul>
          <li>Class Position: ${subject.position}</li>
-         <li class="leaderboard">Participants: ${subject.participants.length}</li>
+         <li class="leaderboard">Fellow Participants: ${subject.participants.length}</li>
          <li>Class Point: ${subject.point}/${subject.totalMark}</li>
          <li><a href="student/classes.html?class=${classSelect.value}&subject=${subject.name}">Previous Classes: ${subject.attendedClass}/${subject.totalClasses} </a></li>
          <li><a href="student.html">Assessment: ${subject.assessment}</a></li>
