@@ -356,6 +356,8 @@ section = sectDoc.exists()?  sectDoc.data() : {};
   
   subjectsProgress.innerHTML = "";
   subjs.forEach(subject=>{
+    subject.participants??=[];
+    //.length
     let subjContainer = document.createElement("div");
     subjContainer.innerHTML += `
       <h3 class="subject">${subject.name}</h3>
