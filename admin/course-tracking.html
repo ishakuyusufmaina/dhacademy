@@ -1,0 +1,471 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Course Delivery Tracking System</title>  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f1f5f9;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: auto;
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-bottom: 10px;
+      color: #1e293b;
+      text-align: center;
+    }
+
+    .subtext {
+      color: #64748b;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .upload-box {
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    button {
+      padding: 12px 22px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      color: white;
+      font-size: 14px;
+    }
+
+    .load-btn {
+      background: #334155;
+    }
+
+    .save-btn {
+      background: #2563eb;
+    }
+
+    .message {
+      padding: 15px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .module-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-bottom: 25px;
+    }
+
+    .module-header {
+      background: #1e293b;
+      color: white;
+      padding: 15px 20px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 700px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 14px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+    }
+
+    .table-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 18px;
+      }
+    }
+  </style></head>
+<body>  <div class="container">
+    <h1>Lessons Delivery Tracking System</h1>
+    <p class="subtext">
+    
+    </p><div class="grid">
+ 
+  <select id="session">
+    <option value="">Select Session</option>
+  </select>
+
+  <select id="term">
+    <option value="">Select Term</option>
+    <option value="0">First Term</option>
+    <option value="1">Second Term</option>
+    <option value="2">Third Term</option>
+  </select>
+
+  <select id="section">
+    <option value="">Select Section</option>
+  </select>
+      
+  <select id="class">
+    <option value="">Select Class</option>
+  </select>
+  <select id="course">
+    <option value="">Select Course</option>
+  </select>
+
+ </div>
+
+<div class="upload-box">
+  <h3>Initialize Tracking Data</h3>
+  <br />
+  <input type="file" id="excelFile" accept=".xlsx,.xls" />
+  <br /><br />
+  <small>
+    Excel format: Each heading is a module and lessons are listed under it.
+  </small>
+</div>
+
+<div class="message" id="messageBox"></div>
+
+<div class="button-group">
+  <button class="load-btn" onclick="loadTrackingData()">
+    Load Tracking Data
+  </button>
+
+  <button class="save-btn" onclick="saveTrackingData()">
+    Save Tracking Data
+  </button>
+</div>
+
+<div id="modulesContainer"></div>
+
+  </div>  
+  <script src="../config.js"></script>
+<script src="../batch2.js"></script>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const terms = ["first term", "second term", "third term"];
+  let ses;
+  let years = new Set();
+    let sessionsRef = doc(db, schoolId, "sessions");
+  let sessionsDoc = await getDoc(sessionsRef);
+    if (sessionsDoc.exists()){
+    let sessions =  sessionsDoc.data().sessions;
+   ses= sessions.sort((a, b)=>b.no - a.no)[0];
+      sessions.forEach(s=>{
+        years.add(s.year);
+       // let opt = new Option(s.year);
+        //session.append(opt);
+      })
+    //session.textContent = ses.year + ", " + terms[ses.term];
+  }
+  
+  years.forEach(s=>{
+    let opt = new Option(s);
+    session.append(opt);
+    session.value = ses.year;
+  })
+  term.value = ses.term;
+  
+  let sections = (await getDoc(doc(db, schoolId, "section"))).data();
+  for (const sect in sections){
+    let opt = new Option(sect);
+    section.append(opt);
+    //section.value = sect;
+  }
+  section.onchange = e=>{
+    let sect = section.value;
+    
+    let cls = document.getElementById("class");
+    cls.innerHTML = '<option value="">Select Class</option>';
+    let course = document.getElementById("course");
+    course.innerHTML = "<option value=''>Select Course</option>";
+    if (!sect) return;
+    let sectData = sections[sect];
+    sectData.classes.forEach(c=>{
+      let opt = new Option(c);
+      cls.append(opt);
+    })
+    sectData.subjects.forEach(c=>{
+      let opt = new Option(c);
+      course.append(opt);
+    })
+    
+  }
+
+    let trackingData = null;
+
+    const messageBox = document.getElementById("messageBox");
+    const modulesContainer = document.getElementById("modulesContainer");
+
+    function showMessage(message) {
+      messageBox.style.display = "block";
+      messageBox.innerText = message;
+    }
+
+    function getMetaValues() {
+      return {
+        //schoolId: document.getElementById("schoolId").value,
+        session: document.getElementById("session").value,
+        term: document.getElementById("term").value,
+        section: document.getElementById("section").value,
+        className: document.getElementById("class").value,
+        course: document.getElementById("course").value
+      };
+    }
+
+    function getDocPath() {
+      const meta = getMetaValues();
+
+      return `${schoolId}/db/progress/${key(meta.session)}_${meta.term}_${meta.section}_${meta.className}_${meta.course}`;
+    }
+
+    async function loadTrackingData() {
+      try {
+        const ref = doc(db, getDocPath());
+        const snapshot = await getDoc(ref);
+
+        if (snapshot.exists()) {
+          trackingData = snapshot.data();
+          renderModules();
+          showMessage("Tracking data loaded successfully.");
+        } else {
+          showMessage("No tracking data found.");
+        }
+      } catch (error) {
+        console.error(error);
+        showMessage("Failed to load tracking data.");
+      }
+    }
+
+    async function saveTrackingData() {
+      try {
+        const ref = doc(db, getDocPath());
+        await setDoc(ref, trackingData, { merge: true });
+        showMessage("Tracking data saved successfully.");
+      } catch (error) {
+        console.error(error);
+        showMessage("Failed to save tracking data.");
+      }
+    }
+
+    function renderModules() {
+      modulesContainer.innerHTML = "";
+
+      trackingData.modules.forEach((moduleItem, moduleIndex) => {
+        const card = document.createElement("div");
+        card.className = "module-card";
+
+        let rows = "";
+
+        moduleItem.lessons.forEach((lessonItem, lessonIndex) => {
+          rows += `
+            <tr>
+              <td>${lessonItem.lesson}</td>
+              <td>
+                <input
+                  type="checkbox"
+                  ${lessonItem.isdelivered ? "checked" : ""}
+                  onchange="toggleLesson(${moduleIndex}, ${lessonIndex}, this.checked)"
+                />
+              </td>
+              <td>${lessonItem.delivery_timestamp || "-"}</td>
+              <td>
+                <input
+                  type="text"
+                  class="table-input"
+                  value="${lessonItem.deliveredBy || ""}"
+                  onchange="updateDeliveredBy(${moduleIndex}, ${lessonIndex}, this.value)"
+                  readonly
+                />
+              </td>
+            </tr>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="module-header">
+            <h3>${moduleItem.module}</h3>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lesson</th>
+                  <th>Delivered</th>
+                  <th>Timestamp</th>
+                  <th>Delivered By</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        modulesContainer.appendChild(card);
+      });
+    }
+
+    window.toggleLesson = function(moduleIndex, lessonIndex, checked) {
+      const lesson = trackingData.modules[moduleIndex].lessons[lessonIndex];
+
+      lesson.isdelivered = checked;
+      lesson.delivery_timestamp = checked
+        ? new Date().toISOString()
+        : null;
+
+      if (!checked) {
+        lesson.deliveredBy = null;
+      }
+    };
+
+    window.updateDeliveredBy = function(moduleIndex, lessonIndex, value) {
+      trackingData.modules[moduleIndex].lessons[lessonIndex].deliveredBy = value;
+    };
+
+    document
+      .getElementById("excelFile")
+      .addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        try {
+          const data = await file.arrayBuffer();
+          const workbook = XLSX.read(data);
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+          const sheetData = XLSX.utils.sheet_to_json(firstSheet, {
+            header: 1,
+            defval: ""
+          });
+
+          const headers = sheetData[0] || [];
+
+          const modules = headers
+            .map((moduleName, colIndex) => {
+              if (!moduleName) return null;
+
+              const lessons = [];
+
+              for (let rowIndex = 1; rowIndex < sheetData.length; rowIndex++) {
+                const lessonValue = sheetData[rowIndex][colIndex];
+
+                if (lessonValue && String(lessonValue).trim() !== "") {
+                  lessons.push({
+                    lesson: lessonValue,
+                    isdelivered: false,
+                    delivery_timestamp: null,
+                    deliveredBy: null
+                  });
+                }
+              }
+
+              return {
+                module: moduleName,
+                lessons
+              };
+            })
+            .filter(Boolean);
+
+          const meta = getMetaValues();
+
+          trackingData = {
+            modules,
+            meta: {
+              course: meta.course,
+              session: meta.session,
+              term: meta.term,
+              section: meta.section,
+              class: meta.className
+            }
+          };
+
+          renderModules();
+          showMessage("Excel initialized successfully.");
+        } catch (error) {
+          console.error(error);
+          showMessage("Failed to process Excel file.");
+        }
+      });
+
+    window.loadTrackingData = loadTrackingData;
+    window.saveTrackingData = saveTrackingData;
+  window.key = key;
+  function key(token){
+      return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
+    }
+  
+  </script></body>
+</html>
