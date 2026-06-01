@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contents and Engagement</title>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body{
+      background: linear-gradient(135deg, #f4f7ff, #eef2ff);
+      color:#1e293b;
+      min-height:100vh;
+      padding:20px;
+    }
+
+    .container{
+      max-width:1200px;
+      margin:auto;
+    }
+
+    .top-card{
+      background:#fff;
+      border-radius:24px;
+      padding:25px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.08);
+      margin-bottom:25px;
+    }
+
+    .page-title{
+      text-align:center;
+      font-size:2.3rem;
+      font-weight:700;
+      margin-bottom:25px;
+      color:#1e3a8a;
+    }
+
+    .info-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:15px;
+    }
+
+    .info-item{
+      background:linear-gradient(135deg,#2563eb,#3b82f6);
+      color:#fff;
+      padding:18px;
+      border-radius:18px;
+      box-shadow:0 5px 18px rgba(37,99,235,0.2);
+    }
+
+    .info-item h4{
+      font-size:0.9rem;
+      opacity:0.9;
+      margin-bottom:8px;
+      font-weight:500;
+    }
+
+    .info-item p{
+      font-size:1rem;
+      font-weight:700;
+    }
+
+    .modules-wrapper{
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+
+    .module-card{
+      background:#fff;
+      border-radius:24px;
+      overflow:hidden;
+      box-shadow:0 10px 25px rgba(0,0,0,0.07);
+      transition:0.3s;
+    }
+
+    .module-card:hover{
+      transform:translateY(-3px);
+    }
+
+    .module-header{
+      background:linear-gradient(135deg,#0f172a,#1e293b);
+      color:#fff;
+      padding:20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .module-title{
+      font-size:1.3rem;
+      font-weight:700;
+    }
+
+    .lesson-count{
+      background:rgba(255,255,255,0.15);
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:0.9rem;
+    }
+
+    .lesson-list{
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:15px;
+    }
+
+    .lesson-item{
+      border:1px solid #e2e8f0;
+      border-radius:18px;
+      padding:18px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+      flex-wrap:wrap;
+      transition:0.25s;
+      background:#f8fafc;
+    }
+
+    .lesson-item:hover{
+      background:#eef4ff;
+      border-color:#93c5fd;
+    }
+
+    .lesson-left{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex:1;
+      min-width:260px;
+    }
+
+    .lesson-number{
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      background:#2563eb;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      flex-shrink:0;
+    }
+
+    .lesson-details{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .lesson-title-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .lesson-title{
+      font-size:1rem;
+      font-weight:700;
+      color:#0f172a;
+      text-decoration:none;
+    }
+
+    .lesson-title:hover{
+      color:#2563eb;
+    }
+
+    .submission-count{
+      font-size:0.88rem;
+      color:#475569;
+      font-weight:600;
+    }
+
+    .badge{
+      background:#dc2626;
+      color:#fff;
+      font-size:0.75rem;
+      font-weight:700;
+      padding:5px 10px;
+      border-radius:999px;
+      animation:pulse 1.5s infinite;
+    }
+
+    @keyframes pulse{
+      0%{
+        transform:scale(1);
+      }
+      50%{
+        transform:scale(1.06);
+      }
+      100%{
+        transform:scale(1);
+      }
+    }
+
+    .lesson-meta{
+      color:#64748b;
+      font-size:0.88rem;
+    }
+
+    .lesson-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      padding:10px 16px;
+      border-radius:12px;
+      text-decoration:none;
+      font-weight:600;
+      transition:0.25s;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .editor-btn{
+      background:#2563eb;
+      color:#fff;
+    }
+
+    .editor-btn:hover{
+      background:#1d4ed8;
+    }
+
+    .submission-btn{
+      background:#e2e8f0;
+      color:#0f172a;
+    }
+
+    .submission-btn:hover{
+      background:#cbd5e1;
+    }
+
+    .empty-state{
+      text-align:center;
+      padding:40px;
+      background:#fff;
+      border-radius:24px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.07);
+      color:#64748b;
+    }
+
+    @media(max-width:768px){
+
+      .page-title{
+        font-size:1.8rem;
+      }
+
+      .module-header{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .lesson-item{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .lesson-actions{
+        width:100%;
+      }
+
+      .btn{
+        flex:1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="top-card">
+
+      <h1 class="page-title">Contents and Engagement</h1>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <h4>Session</h4>
+          <p id="session"></p>
+        </div>
+
+        <div class="info-item">
+          <h4>Term</h4>
+          <p id="term"></p>
+        </div>
+
+        <div class="info-item">
+          <h4>Section</h4>
+          <p id="section"></p>
+        </div>
+
+        <div class="info-item">
+          <h4>Class</h4>
+          <p id="class"></p>
+        </div>
+
+        <div class="info-item">
+          <h4>Course</h4>
+          <p id="course"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="modulesContainer" class="modules-wrapper"></div>
+
+  </div>
+  
+  <script src="../../config.js"></script>
+ <script src="../../batch2.js"></script>
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+  import {getFirestore, doc, setDoc, getDoc, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // -----------------------------------
+    // Mock Local Storage Data
+    // -----------------------------------
+
+ //   localStorage.setItem("session", "2025/2026");
+//    localStorage.setItem("term", "Third Term");
+  //  localStorage.setItem("section", "Primary Section");
+   // localStorage.setItem("class", "Primary 5");
+   // localStorage.setItem("course", "Computer Science");
+
+    // -----------------------------------
+    // Retrieve School Data
+    // -----------------------------------
+
+    const schoolInfo = {
+      session: localStorage.getItem("session"),
+      term: localStorage.getItem("term"),
+      section: localStorage.getItem("section"),
+      class: localStorage.getItem("class"),
+      course: localStorage.getItem("subject")
+    };
+   const terms = ["First Term", "Second Term", "Third Term"];
+    document.getElementById("session").textContent = schoolInfo.session;
+    document.getElementById("term").textContent = terms[schoolInfo.term];
+    document.getElementById("section").textContent = schoolInfo.section.toUpperCase();
+    document.getElementById("class").textContent = schoolInfo.class;
+    document.getElementById("course").textContent = schoolInfo.course;
+
+    // -----------------------------------
+    // Mock Course Content Data
+    // -----------------------------------
+
+    let courseContents = [
+
+      {
+        title: "Introduction to Computing",
+
+        lessons: [
+
+          {
+            title: "What is a Computer?",
+
+            meta: {
+              totalSubmissions: 18,
+              markSubmissions: 10
+            }
+          },
+
+          {
+            title: "Parts of a Computer",
+
+            meta: {
+              totalSubmissions: 15,
+              markSubmissions: 15
+            }
+          },
+
+          {
+            title: "Input and Output Devices",
+
+            meta: {
+              totalSubmissions: 22,
+              markSubmissions: 17
+            }
+          }
+        ]
+      },
+
+      {
+        title: "Programming Fundamentals",
+
+        lessons: [
+
+          {
+            title: "Introduction to Python",
+
+            meta: {
+              totalSubmissions: 40,
+              markSubmissions: 35
+            }
+          },
+
+          {
+            title: "Variables and Data Types",
+
+            meta: {
+              totalSubmissions: 32,
+              markSubmissions: 28
+            }
+          },
+
+          {
+            title: "Conditional Statements",
+
+            meta: {
+              totalSubmissions: 27,
+              markSubmissions: 27
+            }
+          }
+        ]
+      },
+
+      {
+        title: "Web Development",
+
+        lessons: [
+
+          {
+            title: "Introduction to HTML",
+
+            meta: {
+              totalSubmissions: 50,
+              markSubmissions: 41
+            }
+          },
+
+          {
+            title: "CSS Fundamentals",
+
+            meta: {
+              totalSubmissions: 46,
+              markSubmissions: 39
+            }
+          }
+        ]
+      }
+    ];
+  
+  function getDocPath() {
+      //return `${schoolId}/db/progress/${key(meta.session)}_${meta.term}_${meta.section}_${meta.className}_${meta.course}`;
+
+      return `${schoolId}/db/progress/${key(schoolInfo.session)}_${schoolInfo.term}_${schoolInfo.section}_${schoolInfo.class}_${schoolInfo.course}`;
+  }
+  
+  let engageDocRef = doc(db, `${schoolId}/db/contents_engagements/${key(schoolInfo.session)}_${schoolInfo.term}_${schoolInfo.section}_${schoolInfo.class}_${schoolInfo.course}`);
+  let engageDoc = await getDoc(engageDocRef);
+  if (!engageDoc.exists()){
+    let groundDocRef = doc(db, getDocPath());
+    console.log(getDocPath());
+    
+    let groundDoc = await getDoc(groundDocRef);
+    if (!groundDoc.exists()) alert("Precondition for engagement has not been established");
+    let groundData = groundDoc.data();
+    /* trackingData.modules.forEach((moduleItem, moduleIndex)
+      moduleItem.lessons.forEach((lessonItem, lessonIndex) => {
+       lessonItem.lesson
+        moduleItem.module*/
+      let contents = [];
+    let modules = groundData.modules;
+    modules.forEach(moduleItem=>{
+      contents.push({
+        title: moduleItem.module,
+        lessons: moduleItem.lessons.map(lessonItem => ({
+          title: lessonItem.lesson,
+          meta: { totalSubmissions: 0, markSubmissions: 0 }
+        }))
+      })      
+    });
+    engageDoc = {contents}
+    await setDoc(engageDocRef, engageDoc, {merge: true});
+    window.location.reload();
+  } else {
+  let engageData = engageDoc.data()
+  courseContents = engageData.contents;
+  }
+    // -----------------------------------
+    // Render Modules and Lessons
+    // -----------------------------------
+
+    const modulesContainer = document.getElementById("modulesContainer");
+
+    function createLessonURL(moduleIndex, lessonIndex, moduleTitle, lessonTitle){
+
+      const params = new URLSearchParams({
+        moduleIndex,
+        lessonIndex,
+        moduleTitle,
+        lessonTitle
+      });
+
+      return `lesson-editor.html?${params.toString()}`;
+    }
+
+    function renderModules(){
+
+      if(!courseContents.length){
+
+        modulesContainer.innerHTML = `
+          <div class="empty-state">
+            No course content available.
+          </div>
+        `;
+
+        return;
+      }
+
+      courseContents.forEach((module, moduleIndex) => {
+
+        const moduleCard = document.createElement("div");
+        moduleCard.className = "module-card";
+
+        const lessonsHTML = module.lessons.map((lesson, lessonIndex) => {
+
+          const total = lesson.meta.totalSubmissions;
+          const marked = lesson.meta.markSubmissions;
+          const unmarked = total - marked;
+
+          const lessonURL = createLessonURL(
+            moduleIndex,
+            lessonIndex,
+            module.title,
+            lesson.title
+          );
+
+          return `
+            <div class="lesson-item">
+
+              <div class="lesson-left">
+
+                <div class="lesson-number">
+                  ${lessonIndex + 1}
+                </div>
+
+                <div class="lesson-details">
+
+                  <div class="lesson-title-row">
+
+                    <a href="${lessonURL}" class="lesson-title">
+                      ${lesson.title}
+                    </a>
+
+                    <span class="submission-count">
+                      (${total} submissions)
+                    </span>
+
+                    ${
+                      unmarked > 0
+                      ? `<span class="badge">${unmarked} New</span>`
+                      : ""
+                    }
+
+                  </div>
+
+                  <div class="lesson-meta">
+                    Marked: ${marked} / ${total}
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div class="lesson-actions">
+
+                <a href="editor.html" class="btn editor-btn">
+                  Open Editor
+                </a>
+
+                <a href="${lessonURL}&view=submissions" class="btn submission-btn">
+                  View Submissions
+                </a>
+
+              </div>
+
+            </div>
+          `;
+
+        }).join("");
+
+        moduleCard.innerHTML = `
+
+          <div class="module-header">
+
+            <div class="module-title">
+              ${module.title}
+            </div>
+
+            <div class="lesson-count">
+              ${module.lessons.length} Lessons
+            </div>
+
+          </div>
+
+          <div class="lesson-list">
+            ${lessonsHTML}
+          </div>
+        `;
+
+        modulesContainer.appendChild(moduleCard);
+
+      });
+    }
+
+    renderModules();
+
+  
+  function key(token){
+      return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
+    }
+  </script>
+
+</body>
+</html>

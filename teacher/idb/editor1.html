@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Lesson Content Editor</title>
+
+<!-- Quill Editor -->
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet"/>
+
+<style>
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background:#f4f7fb;
+  color:#1e293b;
+  min-height:100vh;
+}
+
+/* ======================================
+   LAYOUT
+====================================== */
+
+.wrapper{
+  width:100%;
+  max-width:1400px;
+  margin:auto;
+  padding:20px;
+}
+
+.topbar{
+  background:#ffffff;
+  border-radius:24px;
+  padding:20px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.08);
+  margin-bottom:20px;
+}
+
+.page-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.page-title h1{
+  font-size:2rem;
+  color:#0f172a;
+}
+
+.status-badges{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.badge{
+  padding:10px 16px;
+  border-radius:999px;
+  font-size:0.85rem;
+  font-weight:600;
+}
+
+.badge.published{
+  background:#dcfce7;
+  color:#166534;
+}
+
+.badge.unpublished{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.badge.accepting{
+  background:#dbeafe;
+  color:#1d4ed8;
+}
+
+/* ======================================
+   COURSE INFO
+====================================== */
+
+.info-grid{
+  margin-top:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:15px;
+}
+
+.info-card{
+  background:linear-gradient(135deg,#1d4ed8,#2563eb);
+  color:#fff;
+  border-radius:18px;
+  padding:16px;
+}
+
+.info-card h4{
+  font-size:0.8rem;
+  opacity:0.85;
+  margin-bottom:8px;
+  font-weight:500;
+}
+
+.info-card p{
+  font-weight:700;
+}
+
+/* ======================================
+   TOOLBAR
+====================================== */
+
+.toolbar{
+  background:#fff;
+  border-radius:24px;
+  padding:18px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.08);
+  margin-bottom:20px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:15px;
+}
+
+.toolbar-left,
+.toolbar-right{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:none;
+  outline:none;
+  cursor:pointer;
+  padding:12px 18px;
+  border-radius:14px;
+  font-weight:600;
+  transition:0.25s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  text-decoration:none;
+}
+
+.btn-primary{
+  background:#2563eb;
+  color:#fff;
+}
+
+.btn-primary:hover{
+  background:#1d4ed8;
+}
+
+.btn-secondary{
+  background:#e2e8f0;
+  color:#0f172a;
+}
+
+.btn-secondary:hover{
+  background:#cbd5e1;
+}
+
+.btn-success{
+  background:#16a34a;
+  color:#fff;
+}
+
+.btn-success:hover{
+  background:#15803d;
+}
+
+.btn-danger{
+  background:#dc2626;
+  color:#fff;
+}
+
+.btn-danger:hover{
+  background:#b91c1c;
+}
+
+/* ======================================
+   EDITOR
+====================================== */
+
+.editor-container{
+  background:#fff;
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 8px 30px rgba(0,0,0,0.08);
+  margin-bottom:20px;
+}
+
+.editor-header{
+  padding:20px;
+  border-bottom:1px solid #e2e8f0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:15px;
+}
+
+.editor-header h2{
+  font-size:1.2rem;
+  color:#0f172a;
+}
+
+.preview-toggle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:600;
+  color:#334155;
+}
+
+.preview-toggle input{
+  width:18px;
+  height:18px;
+  cursor:pointer;
+}
+
+#editor{
+  height:500px;
+  background:#fff;
+}
+
+#previewArea{
+  min-height:500px;
+  padding:25px;
+  display:none;
+  overflow:auto;
+}
+
+/* ======================================
+   PREVIEW FORM ELEMENTS
+====================================== */
+
+#previewArea input,
+#previewArea textarea,
+#previewArea select{
+  width:100%;
+  padding:12px;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  margin-top:6px;
+  margin-bottom:18px;
+}
+
+#previewArea button{
+  padding:12px 18px;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  background:#2563eb;
+  color:#fff;
+}
+
+/* ======================================
+   FOOTER
+====================================== */
+
+.footer{
+  text-align:center;
+  padding:20px;
+  color:#64748b;
+  font-size:0.9rem;
+}
+
+/* ======================================
+   RESPONSIVE
+====================================== */
+
+@media(max-width:768px){
+
+  .page-title h1{
+    font-size:1.5rem;
+  }
+
+  .toolbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .toolbar-left,
+  .toolbar-right{
+    width:100%;
+  }
+
+  .btn{
+    flex:1;
+  }
+
+  #editor{
+    height:400px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <!-- ======================================
+       HEADER
+  ======================================= -->
+
+  <div class="topbar">
+
+    <div class="page-title">
+
+      <div>
+        <h1 id="lessonTitleHeading">Lesson Editor</h1>
+      </div>
+
+      <div class="status-badges">
+
+        <div id="publishBadge" class="badge unpublished">
+          Unpublished
+        </div>
+
+        <div id="submissionBadge" class="badge">
+          Submission Disabled
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="info-grid">
+
+      <div class="info-card">
+        <h4>Session</h4>
+        <p id="session"></p>
+      </div>
+
+      <div class="info-card">
+        <h4>Term</h4>
+        <p id="term"></p>
+      </div>
+
+      <div class="info-card">
+        <h4>Section</h4>
+        <p id="section"></p>
+      </div>
+
+      <div class="info-card">
+        <h4>Class</h4>
+        <p id="class"></p>
+      </div>
+
+      <div class="info-card">
+        <h4>Course</h4>
+        <p id="course"></p>
+      </div>
+
+      <div class="info-card">
+        <h4>Module</h4>
+        <p id="moduleTitle"></p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ======================================
+       TOOLBAR
+  ======================================= -->
+
+  <div class="toolbar">
+
+    <div class="toolbar-left">
+
+      <button id="previousBtn" class="btn btn-secondary">
+        ⬅ Previous
+      </button>
+
+      <button id="nextBtn" class="btn btn-secondary">
+        Next ➜
+      </button>
+
+      <button id="saveBtn" class="btn btn-primary">
+        💾 Save
+      </button>
+
+    </div>
+
+    <div class="toolbar-right">
+
+      <button id="publishBtn" class="btn btn-success">
+        Publish
+      </button>
+
+      <button id="acceptSubmissionBtn" class="btn btn-secondary">
+        Accept Submission
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- ======================================
+       EDITOR
+  ======================================= -->
+
+  <div class="editor-container">
+
+    <div class="editor-header">
+
+      <h2 id="editorLessonTitle">
+        Lesson Content
+      </h2>
+
+      <label class="preview-toggle">
+        <input type="checkbox" id="previewToggle"/>
+        Preview Mode
+      </label>
+
+    </div>
+
+    <div id="editor"></div>
+
+    <div id="previewArea"></div>
+
+  </div>
+
+  <div class="footer">
+    Content Editor • Learning Management System
+  </div>
+
+</div>
+
+<!-- Firebase -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+// ======================================
+// FIREBASE CONFIG
+// ======================================
+
+const firebaseConfig = {
+
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+// ======================================
+// QUILL EDITOR
+// ======================================
+
+const quill = new Quill('#editor', {
+  theme: 'snow',
+  placeholder: 'Write lesson content here...',
+  modules: {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered'}, { list: 'bullet' }],
+      ['link', 'image'],
+      ['clean']
+    ]
+  }
+});
+
+
+// ======================================
+// LOCAL STORAGE DATA
+// ======================================
+
+const session = localStorage.getItem("session");
+const term = localStorage.getItem("term");
+const section = localStorage.getItem("section");
+const className = localStorage.getItem("class");
+const course = localStorage.getItem("course");
+
+const courseContents =
+  JSON.parse(localStorage.getItem("courseContents")) || [];
+
+
+// ======================================
+// URL PARAMS
+// ======================================
+
+const params = new URLSearchParams(window.location.search);
+
+let moduleTitle = params.get("moduleTitle");
+let moduleIndex = Number(params.get("moduleIndex"));
+
+let lessonTitle = params.get("lessonTitle");
+let lessonIndex = Number(params.get("lessonIndex"));
+
+
+// ======================================
+// SCHOOL ID
+// ======================================
+
+const schoolId = localStorage.getItem("schoolId") || "defaultSchool";
+
+
+// ======================================
+// LESSON DOC ID
+// ======================================
+
+const lessonDocId =
+`${session}_${term}_${section}_${className}_${course}_${moduleIndex}_${lessonIndex}`;
+
+const lessonRef = doc(
+  db,
+  schoolId,
+  "db",
+  "learningContents",
+  lessonDocId
+);
+
+
+// ======================================
+// LESSON OBJECT
+// ======================================
+
+let lesson = null;
+
+
+// ======================================
+// INITIALIZE UI
+// ======================================
+
+function initializeInfo(){
+
+  document.getElementById("session").textContent = session;
+  document.getElementById("term").textContent = term;
+  document.getElementById("section").textContent = section;
+  document.getElementById("class").textContent = className;
+  document.getElementById("course").textContent = course;
+  document.getElementById("moduleTitle").textContent = moduleTitle;
+
+  document.getElementById("lessonTitleHeading").textContent =
+    lessonTitle;
+
+  document.getElementById("editorLessonTitle").textContent =
+    lessonTitle;
+
+}
+
+
+// ======================================
+// CREATE DEFAULT LESSON
+// ======================================
+
+function createDefaultLesson(){
+
+  return {
+
+    session,
+    term,
+    section,
+    class: className,
+    course,
+
+    moduleTitle,
+    moduleIndex,
+
+    lessonTitle,
+    lessonIndex,
+
+    content: "",
+
+    answers: [],
+
+    published: false,
+
+    acceptsSubmission: false
+
+  };
+
+}
+
+
+// ======================================
+// LOAD LESSON
+// ======================================
+
+async function loadLesson(){
+
+  initializeInfo();
+
+  const snapshot = await getDoc(lessonRef);
+
+  if(snapshot.exists()){
+
+    lesson = snapshot.data();
+
+  }else{
+
+    lesson = createDefaultLesson();
+
+    await setDoc(lessonRef, lesson);
+
+  }
+
+  quill.root.innerHTML = lesson.content || "";
+
+  updateStatusUI();
+
+}
+
+
+// ======================================
+// STATUS UI
+// ======================================
+
+function updateStatusUI(){
+
+  const publishBadge =
+    document.getElementById("publishBadge");
+
+  const submissionBadge =
+    document.getElementById("submissionBadge");
+
+  const publishBtn =
+    document.getElementById("publishBtn");
+
+  const acceptSubmissionBtn =
+    document.getElementById("acceptSubmissionBtn");
+
+  // Published
+
+  if(lesson.published){
+
+    publishBadge.textContent = "Published";
+    publishBadge.className = "badge published";
+
+    publishBtn.textContent = "Unpublish";
+    publishBtn.className = "btn btn-danger";
+
+  }else{
+
+    publishBadge.textContent = "Unpublished";
+    publishBadge.className = "badge unpublished";
+
+    publishBtn.textContent = "Publish";
+    publishBtn.className = "btn btn-success";
+
+  }
+
+  // Submission
+
+  if(lesson.acceptsSubmission){
+
+    submissionBadge.textContent =
+      "Submission Enabled";
+
+    submissionBadge.className =
+      "badge accepting";
+
+    acceptSubmissionBtn.textContent =
+      "Disable Submission";
+
+  }else{
+
+    submissionBadge.textContent =
+      "Submission Disabled";
+
+    submissionBadge.className =
+      "badge unpublished";
+
+    acceptSubmissionBtn.textContent =
+      "Accept Submission";
+
+  }
+
+}
+
+
+// ======================================
+// SAVE LESSON
+// ======================================
+
+async function saveLesson(){
+
+  try{
+
+    lesson.content = quill.root.innerHTML;
+
+    await updateDoc(lessonRef, lesson);
+
+    showToast("Lesson saved successfully.");
+
+  }catch(error){
+
+    console.error(error);
+
+    showToast("Failed to save lesson.");
+
+  }
+
+}
+
+
+// ======================================
+// PUBLISH / UNPUBLISH
+// ======================================
+
+document.getElementById("publishBtn")
+.addEventListener("click", async () => {
+
+  lesson.published = !lesson.published;
+
+  await saveLesson();
+
+  updateStatusUI();
+
+});
+
+
+// ======================================
+// ACCEPT SUBMISSION
+// ======================================
+
+document.getElementById("acceptSubmissionBtn")
+.addEventListener("click", async () => {
+
+  lesson.acceptsSubmission =
+    !lesson.acceptsSubmission;
+
+  await saveLesson();
+
+  updateStatusUI();
+
+});
+
+
+// ======================================
+// SAVE BUTTON
+// ======================================
+
+document.getElementById("saveBtn")
+.addEventListener("click", saveLesson);
+
+
+// ======================================
+// PREVIEW MODE
+// ======================================
+
+const previewToggle =
+  document.getElementById("previewToggle");
+
+const previewArea =
+  document.getElementById("previewArea");
+
+previewToggle.addEventListener("change", () => {
+
+  if(previewToggle.checked){
+
+    previewArea.style.display = "block";
+    document.querySelector(".ql-container")
+      .style.display = "none";
+
+    const html = quill.root.innerHTML;
+
+    previewArea.innerHTML = html;
+
+    initializeFormTracking();
+
+  }else{
+
+    previewArea.style.display = "none";
+
+    document.querySelector(".ql-container")
+      .style.display = "block";
+
+  }
+
+});
+
+
+// ======================================
+// FORM TRACKING
+// ======================================
+
+function initializeFormTracking(){
+
+  const formElements = previewArea.querySelectorAll(
+    "input, textarea, select"
+  );
+
+  formElements.forEach((element, index) => {
+
+    // Restore saved answer
+
+    if(lesson.answers[index] !== undefined){
+
+      element.value = lesson.answers[index];
+
+    }
+
+    // Listen
+
+    element.addEventListener("input", () => {
+
+      lesson.answers[index] = element.value;
+
+    });
+
+    element.addEventListener("change", () => {
+
+      lesson.answers[index] = element.value;
+
+    });
+
+  });
+
+}
+
+
+// ======================================
+// NAVIGATION
+// ======================================
+
+function navigateLesson(direction){
+
+  const module = courseContents[moduleIndex];
+
+  if(!module) return;
+
+  const lessons = module.lessons;
+
+  let newIndex = lessonIndex + direction;
+
+  if(newIndex < 0){
+
+    showToast("No previous lesson.");
+
+    return;
+  }
+
+  if(newIndex >= lessons.length){
+
+    showToast("No next lesson.");
+
+    return;
+  }
+
+  const nextLesson = lessons[newIndex];
+
+  const url = new URL(window.location.href);
+
+  url.searchParams.set("lessonIndex", newIndex);
+
+  url.searchParams.set(
+    "lessonTitle",
+    nextLesson.title
+  );
+
+  window.location.href = url.toString();
+
+}
+
+
+// Previous
+
+document.getElementById("previousBtn")
+.addEventListener("click", () => {
+
+  navigateLesson(-1);
+
+});
+
+
+// Next
+
+document.getElementById("nextBtn")
+.addEventListener("click", () => {
+
+  navigateLesson(1);
+
+});
+
+
+// ======================================
+// TOAST
+// ======================================
+
+function showToast(message){
+
+  const toast = document.createElement("div");
+
+  toast.textContent = message;
+
+  toast.style.position = "fixed";
+  toast.style.bottom = "20px";
+  toast.style.right = "20px";
+  toast.style.background = "#0f172a";
+  toast.style.color = "#fff";
+  toast.style.padding = "14px 18px";
+  toast.style.borderRadius = "12px";
+  toast.style.zIndex = "9999";
+  toast.style.boxShadow =
+    "0 8px 25px rgba(0,0,0,0.25)";
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+
+    toast.remove();
+
+  }, 3000);
+
+}
+
+
+// ======================================
+// AUTO SAVE
+// ======================================
+
+let autosaveTimeout;
+
+quill.on("text-change", () => {
+
+  clearTimeout(autosaveTimeout);
+
+  autosaveTimeout = setTimeout(() => {
+
+    saveLesson();
+
+  }, 3000);
+
+});
+
+
+// ======================================
+// START
+// ======================================
+
+loadLesson();
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+
+</body>
+</html>
