@@ -288,6 +288,7 @@ let user = auth.currentUser;
     async function loadTrackingData() {
       try {
         const ref = doc(db, getDocPath());
+        console.log(getDocPath());
         const snapshot = await getDoc(ref);
 
         if (snapshot.exists()) {
@@ -317,6 +318,8 @@ let user = auth.currentUser;
     function renderModules() {
       modulesContainer.innerHTML = "";
 
+      
+      
       trackingData.modules.forEach((moduleItem, moduleIndex) => {
         const card = document.createElement("div");
         card.className = "module-card";
