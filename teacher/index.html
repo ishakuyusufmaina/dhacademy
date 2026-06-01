@@ -299,7 +299,7 @@ let teachersRef = doc(db, schoolId, "teachers");
   const attendance = {};
 
   const terms = ["first term", "second term", "third term"];
-  
+  let sections = sectionDoc.data();
   let sesion;
   let sessionsDoc = await getDoc(sessionsRef);
   if (sessionsDoc.exists()){
@@ -328,6 +328,7 @@ let teachersRef = doc(db, schoolId, "teachers");
   }
   let loads = {};
   let classes;
+  
   onAuthStateChanged(auth, user=>{
     let reg = /@.*/;
     if (user){
@@ -354,7 +355,7 @@ let teachersRef = doc(db, schoolId, "teachers");
         classes = fmClasses.concat(ctClasses);
         let cls = ctClasses[0];
         if (cls){
-          let sections = sectionDoc.exists()? sectionDoc.data() : {};
+          sections = sectionDoc.exists()? sectionDoc.data() : {};
           let section
           for (const sect in sections){
             section = sections[sect];
@@ -380,6 +381,17 @@ let teachersRef = doc(db, schoolId, "teachers");
             loadElm.innerHTML =`${subj} ${cls}`;
             loadElm.classList.add("load");
             loadElm.onclick = e=>{
+              let sect;
+              //alert(sections);
+                for (const k in sections){
+                            
+                if (sections[k].classes.includes(cls)){
+                  sect = k;
+                  //console.log(k, cls);
+                  break;
+                }
+              }
+              localStorage.setItem("section", sect);
               localStorage.setItem("class", cls);
               localStorage.setItem("subject", subj);
               window.location.href = "load/index.html";
