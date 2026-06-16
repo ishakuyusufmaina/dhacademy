@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Drive Browser Demo</title>
+
+<script src="https://accounts.google.com/gsi/client"></script>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    max-width:900px;
+    margin:40px auto;
+    padding:20px;
+}
+
+button{
+    margin:5px;
+    padding:10px 15px;
+    cursor:pointer;
+}
+
+#files{
+    margin-top:20px;
+}
+
+.file{
+    padding:10px;
+    border:1px solid #ddd;
+    margin-bottom:8px;
+    border-radius:8px;
+}
+
+.hidden{
+    display:none;
+}
+</style>
+</head>
+<body>
+
+<h1>Google Drive API Browser Demo</h1>
+
+<button id="loginBtn">Login</button>
+<button id="logoutBtn" class="hidden">Logout</button>
+
+<hr>
+
+<div id="controls" class="hidden">
+
+<button id="listFilesBtn">
+List Files
+</button>
+
+<button id="uploadBtn">
+Upload Sample File
+</button>
+
+<button id="createFolderBtn">
+Create Folder
+</button>
+
+</div>
+
+<h2>Files</h2>
+<div id="files"></div>
+
+<script>
+
+const CLIENT_ID = "118527147839-fqqv4h9vp7nb128ro7eut77784q5rlq8.apps.googleusercontent.com";
+
+const SCOPES =
+'https://www.googleapis.com/auth/drive.file';
+
+let accessToken = null;
+let tokenClient = null;
+
+window.onload = () => {
+
+    tokenClient =
+        google.accounts.oauth2.initTokenClient({
+            client_id: CLIENT_ID,
+            scope: SCOPES,
+            callback: (response) => {
+
+                accessToken = response.access_token;
+
+                document
+                    .getElementById('loginBtn')
+                    .classList.add('hidden');
+
+                document
+                    .getElementById('logoutBtn')
+                    .classList.remove('hidden');
+
+                document
+                    .getElementById('controls')
+                    .classList.remove('hidden');
+
+                listFiles();
+            }
+        });
+
+};
+
+document
+.getElementById('loginBtn')
+.addEventListener('click', () => {
+
+    tokenClient.requestAccessToken();
+
+});
+
+document
+.getElementById('logoutBtn')
+.addEventListener('click', () => {
+
+    google.accounts.oauth2.revoke(
+        accessToken,
+        () => {}
+    );
+
+    accessToken = null;
+
+    document
+        .getElementById('loginBtn')
+        .classList.remove('hidden');
+
+    document
+        .getElementById('logoutBtn')
+        .classList.add('hidden');
+
+    document
+        .getElementById('controls')
+        .classList.add('hidden');
+
+    document.getElementById('files').innerHTML = '';
+
+});
+
+document
+.getElementById('listFilesBtn')
+.addEventListener('click', listFiles);
+
+document
+.getElementById('uploadBtn')
+.addEventListener('click', uploadSampleFile);
+
+document
+.getElementById('createFolderBtn')
+.addEventListener('click', createFolder);
+
+async function driveFetch(url, options = {}) {
+
+    options.headers = {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${accessToken}`
+    };
+
+    return fetch(url, options);
+}
+
+async function listFiles() {
+
+    const res = await driveFetch(
+        'https://www.googleapis.com/drive/v3/files?pageSize=20&fields=files(id,name,mimeType)'
+    );
+
+    const data = await res.json();
+
+    const container =
+        document.getElementById('files');
+
+    container.innerHTML = '';
+
+    (data.files || []).forEach(file => {
+
+        const div = document.createElement('div');
+        div.className = 'file';
+
+        div.innerHTML = `
+            <strong>${file.name}</strong><br>
+            ${file.mimeType}<br>
+            <small>${file.id}</small>
+            <br><br>
+            <button onclick="deleteFile('${file.id}')">
+                Delete
+            </button>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+async function uploadSampleFile() {
+
+    const metadata = {
+        name: 'sample.txt',
+        mimeType: 'text/plain'
+    };
+
+    const content =
+        'Created from browser Drive API demo';
+
+    const boundary =
+        '-------314159265358979323846';
+
+    const body =
+        `--${boundary}\r\n` +
+        `Content-Type: application/json\r\n\r\n` +
+        JSON.stringify(metadata) +
+        `\r\n--${boundary}\r\n` +
+        `Content-Type: text/plain\r\n\r\n` +
+        content +
+        `\r\n--${boundary}--`;
+
+    await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {
+            method: 'POST',
+            headers: {
+                Authorization:
+                    `Bearer ${accessToken}`,
+                'Content-Type':
+                    `multipart/related; boundary=${boundary}`
+            },
+            body
+        }
+    );
+
+    listFiles();
+}
+
+async function createFolder() {
+
+    const folderName =
+        'Browser Demo Folder ' +
+        Date.now();
+
+    const res = await driveFetch(
+        'https://www.googleapis.com/drive/v3/files',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type':
+                    'application/json'
+            },
+            body: JSON.stringify({
+                name: folderName,
+                mimeType:
+                    'application/vnd.google-apps.folder'
+            })
+        }
+    );
+
+    const data = await res.json();
+
+    alert(
+        `Folder created: ${data.name}`
+    );
+
+    listFiles();
+}
+
+async function deleteFile(fileId) {
+
+    if (!confirm('Delete this file?'))
+        return;
+
+    await driveFetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}`,
+        {
+            method: 'DELETE'
+        }
+    );
+
+    listFiles();
+}
+
+</script>
+
+</body>
+</html>

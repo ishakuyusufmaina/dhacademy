@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Index</title>
+
+<style>
+:root{
+    --primary:#2563eb;
+    --primary-light:#dbeafe;
+    --success:#16a34a;
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --radius:16px;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:15px;
+}
+
+.book-header{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+    margin-bottom:20px;
+}
+
+.book-title{
+    font-size:1.5rem;
+    font-weight:700;
+	text-align: center;
+}
+
+.stats{
+    margin-top:15px;
+}
+
+.progress-bar{
+    height:10px;
+    background:#e5e7eb;
+    border-radius:999px;
+    overflow:hidden;
+    margin-top:10px;
+}
+
+.progress-fill{
+    height:100%;
+    background:var(--success);
+    width:0%;
+    transition:.3s;
+}
+
+.progress-text{
+    margin-top:8px;
+    font-size:.9rem;
+    color:var(--muted);
+}
+
+.module{
+    background:var(--card);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:15px;
+    box-shadow:0 3px 10px rgba(0,0,0,.04);
+}
+
+.module-header{
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    background:white;
+}
+
+.module-title{
+    font-weight:600;
+}
+
+.module-meta{
+    font-size:.85rem;
+    color:var(--muted);
+}
+
+.chevron{
+    transition:.3s;
+}
+
+.module.open .chevron{
+    transform:rotate(180deg);
+}
+
+.lesson-list{
+    display:none;
+    border-top:1px solid var(--border);
+}
+
+.module.open .lesson-list{
+    display:block;
+}
+
+.lesson{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--border);
+	
+}
+
+.lesson:last-child{
+    border-bottom:none;
+}
+
+.lesson input{
+    width:20px;
+    height:20px;
+    accent-color:var(--success);
+}
+
+.lesson-title{
+    flex:1;
+	padding: 4px 8px;
+    border-radius: 6px;
+    transition: .2s;
+}
+
+.lesson-title:hover{
+    color: var(--primary);
+    cursor: pointer;
+	 background: var(--primary-light);
+  
+}
+
+.lesson.completed .lesson-title{
+    text-decoration:line-through;
+    color:var(--muted);
+}
+
+.badge{
+    background:var(--primary-light);
+    color:var(--primary);
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:.75rem;
+    font-weight:600;
+}
+
+@media (min-width:768px){
+
+    .book-title{
+        font-size:2rem;
+    }
+
+    .module-header{
+        padding:22px;
+    }
+
+    .lesson{
+        padding:16px 22px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="book-header">
+        <div class="book-title" id="bookTitle"></div>
+
+        <div class="stats">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="progress-text" id="progressText"></div>
+        </div>
+		<div class="stats">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill1"></div>
+            </div>
+
+            <div class="progress-text" id="progressText1"></div>
+        </div>
+    </div>
+
+    <div id="modulesContainer"></div>
+
+</div>
+
+<script src="../../config.js"></script>
+ <script src="../../batch2.js"></script>
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+  import {getFirestore, doc, setDoc, getDoc, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+    const db = getFirestore(app);
+	 const stdApp = initializeApp( studentsConfig, "student");
+	 const stdDb = getFirestore(stdApp);
+	
+const params = new URLSearchParams(window.location.search);
+//console.log(params.get("params"));
+const props = JSON.parse(params.get("params"));
+
+ function getDocPath() {
+      return `${props.schoolId}/db/progress/${key(props.session)}_${props.term}_${props.program}_${props.className}_${props.course}`;
+      
+    }
+let stdProgressRef = doc(stdDb, "course_progress", `${key(props.session)}_${props.term}_${props.program}_${props.className}_${props.course}_${key(props.studentId)}`);
+let stdProgressDoc = await getDoc(stdProgressRef);
+const studentProgress = stdProgressDoc.exists()? stdProgressDoc.data() : {};
+//console.log(JSON.stringify(studentProgress));
+let modulesDoc = await getDoc(doc(db, getDocPath()));
+let moduleData = modulesDoc.data();
+
+const modules = moduleData.modules.map((m, i)=>{
+   // console.log(m.module);
+	
+	studentProgress[m.module] ??={};
+	//if (!i) console.log(JSON.stringify(studentProgress[m.module]));
+    
+	return {
+		title: m.module,
+		lessons: m.lessons.map((l, j)=>{
+			console.log(1, m.module, l.lesson);
+			studentProgress[m.module][l.lesson] ??={};
+			studentProgress[m.module][l.lesson].completed ??=false;
+			
+			return {
+				title: l.lesson,
+				completed:  l.isdelivered,
+				completed1:  studentProgress[m.module][l.lesson].completed,
+				idbSrc: l.idbSrc
+			}
+		})
+	}
+});
+
+const book = {
+    title: props.course,
+	modules
+ 
+};
+
+const bookTitle = document.getElementById("bookTitle");
+const modulesContainer = document.getElementById("modulesContainer");
+
+function calculateStats(){
+
+    let totals = [0, 0];
+    let completes = [0, 0];
+
+    book.modules.forEach(module=>{
+        module.lessons.forEach(lesson=>{
+            totals[0]++; totals[1]++;
+            if(lesson.completed) completes[0]++;
+		    if(lesson.completed1) completes[1]++;
+        });
+    });
+
+    return {totals, completes};
+}
+
+function updateProgress(){
+
+    const {totals, completes} = calculateStats();
+
+    const percent = totals[0]
+        ? Math.round((completes[0] / totals[0]) * 100)
+        : 0;
+	const percent1 = totals[1]
+        ? Math.round((completes[1] / totals[1]) * 100)
+        : 0;
+
+    document.getElementById("progressFill").style.width =
+        percent + "%";
+
+    document.getElementById("progressText").textContent =
+        `${completes[0]} of ${totals[0]} lessons completed by your teacher (${percent}%)`;
+		
+  
+   document.getElementById("progressFill1").style.width =
+        percent1 + "%";
+
+    document.getElementById("progressText1").textContent =
+        `${completes[1]} of ${totals[1]} lessons completed by you (${percent1}%)`;
+}
+
+function render(){
+
+    bookTitle.textContent = book.title;
+
+    modulesContainer.innerHTML = "";
+
+    book.modules.forEach((module,moduleIndex)=>{
+
+        const completedCount =
+            module.lessons.filter(l=>l.completed).length;
+
+        const moduleCard = document.createElement("div");
+        moduleCard.className = "module";
+
+        moduleCard.innerHTML = `
+            <div class="module-header">
+                <div>
+                    <div class="module-title">
+                        ${module.title}
+                    </div>
+
+                    <div class="module-meta">
+                        ${completedCount}/${module.lessons.length}
+                        lessons completed
+                    </div>
+                </div>
+
+                <div class="chevron">
+                    ▼
+                </div>
+            </div>
+
+            <div class="lesson-list"></div>
+        `;
+
+        const lessonList =
+            moduleCard.querySelector(".lesson-list");
+
+        module.lessons.forEach((lesson,lessonIndex)=>{
+
+            const lessonEl =
+                document.createElement("div");
+
+            lessonEl.className =
+                lesson.completed
+                ? "lesson completed"
+                : "lesson";
+
+            lessonEl.innerHTML = `
+                <input
+                    type="checkbox"
+                    ${lesson.completed ? "checked" : ""}
+					disabled
+                >
+
+                <div class="lesson-title">
+                    ${lesson.title}
+                </div>
+
+                <span class="badge">
+                    Lesson
+                </span>
+            `;
+
+            const checkbox =
+                lessonEl.querySelector("input");
+
+            checkbox.addEventListener("change",()=>{
+
+                book.modules[moduleIndex]
+                    .lessons[lessonIndex]
+                    .completed = checkbox.checked;
+
+                render();
+            });
+
+            lessonList.appendChild(lessonEl);
+			
+			let lessonTitle = lessonEl.querySelector(".lesson-title");
+			lessonTitle.onclick = e=>{
+			//	alert(lesson.idbSrc);
+			    let params = {
+					fileId: lesson.idbSrc,
+					lesson: lesson.title,
+					module: module.title
+				}
+				
+				window.location.href = `editor.html?params=${encodeURIComponent(JSON.stringify(params))}`;
+				
+			}
+        });
+
+        moduleCard
+            .querySelector(".module-header")
+            .addEventListener("click",(e)=>{
+
+                if(e.target.tagName==="INPUT")
+                    return;
+
+                moduleCard.classList.toggle("open");
+            });
+
+        modulesContainer.appendChild(moduleCard);
+    });
+
+    updateProgress();
+}
+
+render();
+
+let [program, className, course , session, term, studentId] = [props.program, props.className, props.course, props.session , props.term, props.studentId];
+
+let stdCourse = {program, moduleData, studentProgress, studentId, course , session, term, className};
+window.localStorage.setItem("studentCourse", JSON.stringify(stdCourse));
+
+ function key(token){
+      return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
+    }
+</script>
+
+</body>
+</html>

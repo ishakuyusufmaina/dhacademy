@@ -336,7 +336,6 @@ import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/fire
       const analytics = getAnalytics(app);
       const auth = getAuth(app);
     const db = getFirestore(app);
-	
 
     // -----------------------------------
     // Mock Local Storage Data
@@ -365,13 +364,6 @@ import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/fire
     document.getElementById("section").textContent = schoolInfo.section.toUpperCase();
     document.getElementById("class").textContent = schoolInfo.class;
     document.getElementById("course").textContent = schoolInfo.course;
-	
-	let submStatRef = doc(db, schoolId, "db", "submission_stat", key(`${schoolInfo.session}_${schoolInfo.term}_${schoolInfo.section}_${schoolInfo.class}_${schoolInfo.course}`) )
-	 // batch.set(submStatRef, {[`${module}.${lesson}.submissions`]: increment(1)}, {merge: true});
-	 // batch.set(stdSubmissionRef, work);
-let submDoc = await getDoc(submStatRef);
-let submStat = submDoc.exists()? submDoc.data() : {};
-//console.log(JSON.stringify(submStat));
 
     // -----------------------------------
     // Mock Course Content Data
@@ -482,7 +474,7 @@ let submStat = submDoc.exists()? submDoc.data() : {};
   let engageDocRef = doc(db, `${schoolId}/db/contents_engagements/${key(schoolInfo.session)}_${schoolInfo.term}_${schoolInfo.section}_${schoolInfo.class}_${schoolInfo.course}`);
   let engageDoc = await getDoc(engageDocRef);
   let groundDocRef = doc(db, getDocPath());
-  //  console.log(getDocPath());
+    console.log(getDocPath());
     
     let groundDoc = await getDoc(groundDocRef);
    const filesId = [];
@@ -494,26 +486,17 @@ let submStat = submDoc.exists()? submDoc.data() : {};
       moduleItem.lessons.forEach((lessonItem, lessonIndex) => {
        lessonItem.lesson
         moduleItem.module*/
-		
       let contents = [];
     let modules = groundData.modules;
-    modules.forEach((moduleItem, i)=>{
-     submStat[moduleItem.module] ??={};
+    modules.forEach(moduleItem=>{
+     
       contents.push({
         title: moduleItem.module,
-        lessons: moduleItem.lessons.map((lessonItem, j) => {
-		if (!(i+j)) console.log(1, submStat[moduleItem.module][lessonItem.lesson].submissions);
-		 submStat[moduleItem.module][lessonItem.lesson] ??={submissions:0};
-		 submStat[moduleItem.module][lessonItem.lesson].markedCount ??=0;
-		 let markCount = submStat[moduleItem.module][lessonItem.lesson].markedCount;
-		 let submissions = submStat[moduleItem.module][lessonItem.lesson].submissions;
-         
-		 return {
-				 title: lessonItem.lesson,
-				  fileId: lessonItem.idbSrc,
-				  meta: { totalSubmissions: submissions, markSubmissions: markedCount }
-		  }
-        })
+        lessons: moduleItem.lessons.map(lessonItem => ({
+          title: lessonItem.lesson,
+          fileId: lessonItem.idbSrc,
+          meta: { totalSubmissions: 0, markSubmissions: 0 }
+        }))
       })      
     });
     engageDoc = {contents}
@@ -529,14 +512,17 @@ let submStat = submDoc.exists()? submDoc.data() : {};
 
     const modulesContainer = document.getElementById("modulesContainer");
 
-    function createURL(baseUrl, moduleIndex, lessonIndex, module, lesson){
-     let url = new URL(baseUrl, window.location.href);
-      url.searchParams.set("module", module);
-      url.searchParams.set("lesson", lesson);
-      url.searchParams.set("moduleIndex", moduleIndex);
-      url.searchParams.set("lessonIndex", lessonIndex);
-      return url.toString();
-      
+    function createLessonURL(fileId, moduleIndex, lessonIndex, moduleTitle, lessonTitle){
+
+      const params= {
+	    fileId,
+        moduleIndex,
+        lessonIndex,
+        module: moduleTitle,
+        lesson: lessonTitle
+      };
+
+      return `submissions/editor.html?params=${JSON.stringify(params)}`;
     }
 
     function renderModules(){
@@ -552,38 +538,23 @@ let submStat = submDoc.exists()? submDoc.data() : {};
         return;
       }
       let modules = groundDoc.data().modules;
-      window.localStorage.setItem("courseData", JSON.stringify({modules, schoolInfo}));
       courseContents.forEach((module, moduleIndex) => {
-		
+
         const moduleCard = document.createElement("div");
         moduleCard.className = "module-card";
 
         const lessonsHTML = module.lessons.map((lesson, lessonIndex) => {
-         //console.log(JSON.stringify(lesson));
-		 submStat[module.title] ??={};
-		 submStat[module.title][lesson.title] ??={};
-		 submStat[module.title][lesson.title].submissions ??=0;
-		 submStat[module.title][lesson.title].markedCount ??=0;
-          const total = submStat[module.title][lesson.title].submissions;
-          const marked = submStat[module.title][lesson.title].markedCount;
+         console.log(JSON.stringify(lesson));
+          const total = lesson.meta.totalSubmissions;
+          const marked = lesson.meta.markSubmissions;
           const unmarked = total - marked;
 
-          const lessonEdURL = createURL(
-             "editor.html",
-		            moduleIndex,
+          const lessonURL = createLessonURL(
+            moduleIndex,
             lessonIndex,
             module.title,
-            lesson.title,
-		   
+            lesson.title
           );
-        const lessonSubURL = createURL(
-             "submissions/editor.html",
-		            moduleIndex,
-            lessonIndex,
-            module.title,
-            lesson.title,
-		   
-          );  
 
           return `
             <div class="lesson-item">
@@ -598,7 +569,7 @@ let submStat = submDoc.exists()? submDoc.data() : {};
 
                   <div class="lesson-title-row">
 
-                    <a href="${lessonSubURL}" class="lesson-title">
+                    <a href="${lessonURL}" class="lesson-title">
                       ${lesson.title}
                     </a>
 
@@ -624,11 +595,11 @@ let submStat = submDoc.exists()? submDoc.data() : {};
 
               <div class="lesson-actions">
 
-                <a href="${lessonEdURL}" class="btn editor-btn">
+                <a href="editor.html?fileId=${modules[moduleIndex].lessons[lessonIndex].idbSrc}" class="btn editor-btn">
                   Open Editor
                 </a>
 
-                <a href="${lessonSubURL}&view=submissions" class="btn submission-btn">
+                <a href="${lessonURL}&view=submissions" class="btn submission-btn">
                   View Submissions
                 </a>
 

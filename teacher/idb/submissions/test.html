@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book Index</title>
+
+<style>
+:root{
+    --primary:#2563eb;
+    --primary-light:#dbeafe;
+    --success:#16a34a;
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --radius:16px;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:15px;
+}
+
+.book-header{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+    margin-bottom:20px;
+}
+
+.book-title{
+    font-size:1.5rem;
+    font-weight:700;
+	text-align: center;
+}
+
+.stats{
+    margin-top:15px;
+}
+
+.progress-bar{
+    height:10px;
+    background:#e5e7eb;
+    border-radius:999px;
+    overflow:hidden;
+    margin-top:10px;
+}
+
+.progress-fill{
+    height:100%;
+    background:var(--success);
+    width:0%;
+    transition:.3s;
+}
+
+.progress-text{
+    margin-top:8px;
+    font-size:.9rem;
+    color:var(--muted);
+}
+
+.module{
+    background:var(--card);
+    border-radius:var(--radius);
+    overflow:hidden;
+    margin-bottom:15px;
+    box-shadow:0 3px 10px rgba(0,0,0,.04);
+}
+
+.module-header{
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    cursor:pointer;
+    background:white;
+}
+
+.module-title{
+    font-weight:600;
+}
+
+.module-meta{
+    font-size:.85rem;
+    color:var(--muted);
+}
+
+.chevron{
+    transition:.3s;
+}
+
+.module.open .chevron{
+    transform:rotate(180deg);
+}
+
+.lesson-list{
+    display:none;
+    border-top:1px solid var(--border);
+}
+
+.module.open .lesson-list{
+    display:block;
+}
+
+.lesson{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--border);
+	
+}
+
+.lesson:last-child{
+    border-bottom:none;
+}
+
+.lesson input{
+    width:20px;
+    height:20px;
+    accent-color:var(--success);
+}
+
+.lesson-title{
+    flex:1;
+	padding: 4px 8px;
+    border-radius: 6px;
+    transition: .2s;
+}
+
+.lesson-title:hover{
+    color: var(--primary);
+    cursor: pointer;
+	 background: var(--primary-light);
+  
+}
+
+.lesson.completed .lesson-title{
+    text-decoration:line-through;
+    color:var(--muted);
+}
+
+.badge{
+    background:var(--primary-light);
+    color:var(--primary);
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:.75rem;
+    font-weight:600;
+}
+
+@media (min-width:768px){
+
+    .book-title{
+        font-size:2rem;
+    }
+
+    .module-header{
+        padding:22px;
+    }
+
+    .lesson{
+        padding:16px 22px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="book-header">
+        <div class="book-title" id="bookTitle"></div>
+
+        <div class="stats">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="progress-text" id="progressText"></div>
+        </div>
+    </div>
+
+    <div id="modulesContainer"></div>
+
+</div>
+
+<script>
+
+const book = {
+    title: "Catch Them Young: Python Programming",
+    modules: [
+        {
+            title: "Module 1: Introduction",
+            lessons: [
+                {title:"What is Programming?", completed:true},
+                {title:"Installing Python", completed:false},
+                {title:"Your First Program", completed:false}
+            ]
+        },
+        {
+            title: "Module 2: Variables",
+            lessons: [
+                {title:"Variables", completed:true},
+                {title:"Data Types", completed:true},
+                {title:"Exercises", completed:false}
+            ]
+        },
+        {
+            title: "Module 3: Control Flow",
+            lessons: [
+                {title:"If Statements", completed:false},
+                {title:"Loops", completed:false}
+            ]
+        }
+    ]
+};
+
+const bookTitle = document.getElementById("bookTitle");
+const modulesContainer = document.getElementById("modulesContainer");
+
+function calculateStats(){
+
+    let total = 0;
+    let completed = 0;
+
+    book.modules.forEach(module=>{
+        module.lessons.forEach(lesson=>{
+            total++;
+            if(lesson.completed) completed++;
+        });
+    });
+
+    return {total, completed};
+}
+
+function updateProgress(){
+
+    const {total, completed} = calculateStats();
+
+    const percent = total
+        ? Math.round((completed / total) * 100)
+        : 0;
+
+    document.getElementById("progressFill").style.width =
+        percent + "%";
+
+    document.getElementById("progressText").textContent =
+        `${completed} of ${total} lessons completed (${percent}%)`;
+}
+
+function render(){
+
+    bookTitle.textContent = book.title;
+
+    modulesContainer.innerHTML = "";
+
+    book.modules.forEach((module,moduleIndex)=>{
+
+        const completedCount =
+            module.lessons.filter(l=>l.completed).length;
+
+        const moduleCard = document.createElement("div");
+        moduleCard.className = "module";
+
+        moduleCard.innerHTML = `
+            <div class="module-header">
+                <div>
+                    <div class="module-title">
+                        ${module.title}
+                    </div>
+
+                    <div class="module-meta">
+                        ${completedCount}/${module.lessons.length}
+                        lessons completed
+                    </div>
+                </div>
+
+                <div class="chevron">
+                    ▼
+                </div>
+            </div>
+
+            <div class="lesson-list"></div>
+        `;
+
+        const lessonList =
+            moduleCard.querySelector(".lesson-list");
+
+        module.lessons.forEach((lesson,lessonIndex)=>{
+
+            const lessonEl =
+                document.createElement("div");
+
+            lessonEl.className =
+                lesson.completed
+                ? "lesson completed"
+                : "lesson";
+
+            lessonEl.innerHTML = `
+                <input
+                    type="checkbox"
+                    ${lesson.completed ? "checked" : ""}
+					disabled
+                >
+
+                <div class="lesson-title">
+                    ${lesson.title}
+                </div>
+
+                <span class="badge">
+                    Lesson
+                </span>
+            `;
+
+            const checkbox =
+                lessonEl.querySelector("input");
+
+            checkbox.addEventListener("change",()=>{
+
+                book.modules[moduleIndex]
+                    .lessons[lessonIndex]
+                    .completed = checkbox.checked;
+
+                render();
+            });
+
+            lessonList.appendChild(lessonEl);
+        });
+
+        moduleCard
+            .querySelector(".module-header")
+            .addEventListener("click",(e)=>{
+
+                if(e.target.tagName==="INPUT")
+                    return;
+
+                moduleCard.classList.toggle("open");
+            });
+
+        modulesContainer.appendChild(moduleCard);
+    });
+
+    updateProgress();
+}
+
+render();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GDServer Test</title>
+</head>
+<body>
+
+<button id="testBtn">Test Function</button>
+<pre id="result"></pre>
+
+<script>
+const URL =
+    "https://cfx-mainafly.netlify.app/.netlify/functions/gdserver";
+
+document.getElementById("testBtn").onclick = async () => {
+
+    try {
+
+        const response = await fetch(URL);
+
+        const text = await response.text();
+
+        document.getElementById("result").textContent = text;
+
+    } catch(err) {
+
+        document.getElementById("result").textContent =
+            err.message;
+
+    }
+
+};
+</script>
+
+</body>
+</html>

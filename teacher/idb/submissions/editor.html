@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quill Editor</title>
+
+  <!-- Quill 2.x -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link
+  rel="stylesheet"
+  href="light.css"
+/>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+<style>
+.ql-snow .ql-picker.ql-radiogroup {
+    width: 140px;
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-label::before {
+    content: "Radio Options";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="2"]::before {
+    content: "2 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="3"]::before {
+    content: "3 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="4"]::before {
+    content: "4 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="5"]::before {
+    content: "5 Options Group";
+}
+
+#optionsContainer {
+	border: 1px solid white;
+}
+
+#optionsContainer hr {
+	
+	background: white;
+}
+
+.toolbar {
+border: 4px solid red;
+
+}
+
+ select.marking {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+
+    opacity: 0.15;
+    transition: opacity 0.25s ease;
+
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(2px);
+}
+
+select.marking:hover,
+select.marking:focus {
+    opacity: 1;
+}
+
+
+.correct {
+    color: green !important;
+    background: #d1e7dd !important;
+}
+
+.incorrect {
+    color: red !important;
+    background: #f8d7da !important;
+}
+
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">DH</div>
+      <h1 id="courseTitle">{COURSE NAME} <span>BOOK</span></h1>
+    </div>
+    <div class="meta-badges">
+      <span class="badge v2">v2.x</span>
+      <span class="badge formula">∑ Formula</span>
+      <span class="badge syntax">&lt;/&gt; Syntax</span>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat" id="moduleTitle"><strong ></strong></div>
+	<div class="stat"><strong id="cc">></strong></div>
+    <div class="stat"><strong id="lessonTitle"></strong></div>
+    
+  </div>
+
+  <!-- Editor card -->
+  <div class="editor-card">
+	
+</div>
+   
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span><span class="status-dot"></span> Ready</span>
+        <span id="sel-info">No selection</span>
+      </div>
+      <div class="status-right">
+        <span id="last-saved">Not saved yet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn btn-danger" id="clearWork">Clear</button>
+    <!--button class="btn btn-ghost" onclick="copyHTML()">Copy HTML</button>
+    <button class="btn btn-ghost" onclick="downloadHTML()">Export HTML</button-->
+    <button class="btn btn-primary" id="saveWork">Save Markings</button> 
+    <button class="btn btn-primary" id="submitWork">Return Markings</button> 
+	
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Quill 2.x core -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+<script src="../../../config.js"></script>
+ <script src="../../../batch2.js"></script>
+<script src="customs.js"></script>
+<script src="toolbar.js"></script>
+<script type="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+  import {getFirestore, increment, where, doc, writeBatch, collection, getDocs, query, setDoc, getDoc, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig, "school");
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+    const db = getFirestore(app);
+	 const stdApp = initializeApp( studentsConfig, "student");
+	 const stdDb = getFirestore(stdApp);
+	 var batch = writeBatch(db);
+	 const renewBatch = ()=> batch = writeBatch(db);
+
+   const filesId = [];
+ 
+   
+  const TOKEN_URL = "https://cfx-mainafly.netlify.app/.netlify/functions/gdserver";
+let cachedToken = null;
+let tokenExpiry = 0; // timestamp (ms)
+
+const params = new URLSearchParams(window.location.search);
+  const courseData = JSON.parse(window.localStorage.getItem("courseData"));
+const modules = courseData.modules;
+let moduleIndex = params.get("moduleIndex");
+let lessonIndex = params.get("lessonIndex");
+let moduleData = modules[moduleIndex];
+let lessonData = moduleData.lessons[lessonIndex];
+
+const fileId = lessonData.idbSrc; //params.get("fileId");
+
+const [module, lesson] = [moduleData.module, lessonData.lesson];
+
+
+moduleTitle.innerHTML = module;
+lessonTitle.innerHTML = lesson; 
+
+const stdCourse = courseData.schoolInfo;
+stdCourse.className ??= stdCourse.class;
+stdCourse.program ??= stdCourse.section;
+
+courseTitle.innerHTML = `${stdCourse.course} - <span>BOOK</span>`;
+//alert(stdCourse.program);
+
+
+// 2. Combine your variables into a single unique Document ID string
+
+// 3. Generate the reference cleanly
+
+let submissionsColRef = collection(db, schoolId, "lesson_work_submissions", key(`${stdCourse.session}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}_${module}_${lesson}`));
+const q = query(submissionsColRef, where("marked", "==", false), where("submitted", "==", true));
+const submDocs = await getDocs(q);
+
+
+
+// alert(fileId);
+console.log(fileId);
+let token =  getToken();
+//const inputModel = [];
+
+ 
+	
+ 
+  
+ const editorCard = document.querySelector(".editor-card");
+ 
+ // Load saved draft on boot
+  
+  const works = [];
+ 
+  try {
+    token.then(t=>{
+      getFileContent(fileId, t)
+      .then(content=>{
+	 // console.log(JSON.stringify(content));
+      submDocs.forEach(workDoc=>{
+		let work = workDoc.data();
+		work.ref = workDoc.ref;
+		works.push(work);
+		console.log(work.marks);
+		
+		let editorElm = document.createElement("div");
+		let stdId = document.createElement("div");
+		stdId.innerHTML = `|Submitted by ${work.studentId} on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
+		let line = document.createElement("hr");
+		editorCard.append(stdId, editorElm, line);
+		renderWork(work, editorElm, content)
+	  });
+      showToast('Lesson content read', 'info');
+      });
+    })
+    
+  } catch(e) {}
+
+function renderWork(work, editorElm, content){
+	//console.log(JSON.stringify(work));
+	 setStudentWork(work);
+	 work.lpii = undefined;
+	 studentWorks[work.studentId] = work;
+	 currentStudent = work.studentId;
+	editorElm.id = "std"+key(work.studentId);
+	editorElm.classList.add("editor");
+	  const quill = new Quill(editorElm, {
+		theme: 'snow',
+		modules: {
+		  toolbar: false,
+		  syntax: {
+			highlight: text =>  hljs.highlightAuto(text).value
+		  },
+		  
+		},
+		placeholder: 'Start writing something extraordinary…',
+	  } );
+	 // console.log(JSON.stringify(work));
+	 
+	   quill.setContents(content);
+	quill.disable();
+}
+  // ── Stats ───────────────────────────────────────────────────
+  function updateStats() {
+    
+  }
+
+ 
+
+  // ── Toast ───────────────────────────────────────────────────
+  function showToast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = ''; }, 2800);
+  }
+
+  // ── Save draft ──────────────────────────────────────────────
+  async function saveContent() {
+	let model = getInputModel();
+	studentWork.inputs =  model;
+    
+    try {
+	  await setDoc(stdProgressRef, studentWork);
+      showToast('✓ Work saved', 'success');
+    
+    } catch(e) {
+      showToast('Could not save — try again', 'info');
+    }
+  }
+
+  
+
+  // ── Clear ───────────────────────────────────────────────────
+  function clearEditor() {
+    if (!confirm('Clear all content?')) return;
+    quill.setContents([]);
+    showToast('Editor cleared', 'info');
+  }
+
+  
+
+  
+  
+  
+
+
+async function getFileContent(fileId, accessToken) {
+    if (!fileId) {
+        throw new Error("Missing file ID");
+    }
+
+    const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        }
+    );
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        throw new Error(text);
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return text;
+    }
+}
+  
+  
+/**
+ * Fetch new token from server
+ */
+async function updateToken() {
+    try {
+        const res = await fetch(TOKEN_URL);
+        const data = await res.json();
+
+        if (!data.access_token) {
+            throw new Error("Invalid token response");
+        }
+
+        cachedToken = data.access_token;
+
+        // expires_in is in seconds → convert to ms and subtract small buffer (30s safety)
+        tokenExpiry = Date.now() + (data.expires_in * 1000) - 30000;
+
+        // optional: persist
+        localStorage.setItem("gd_token", cachedToken);
+        localStorage.setItem("gd_token_expiry", tokenExpiry);
+
+        console.log("Token updated");
+        return cachedToken;
+
+    } catch (e) {
+        console.error("Token update error:", e.message);
+        throw e;
+    }
+}
+
+saveWork.onclick = async e=>{
+  await saveWorks(works);
+  showToast("Marking saved.", "success");
+}
+
+async function saveWorks(works=works){
+	works.forEach(w=>{
+		w.inputs.forEach((_, i)=>{
+			w.marks[i] ??=null;
+		})
+		batch.set(w.ref, w, {merge: true});
+	});
+	await batch.commit();
+	renewBatch();
+}
+
+submitWork.onclick = async e=>{
+  let validReturn = true;
+  works.forEach(w=>{
+	console.log(w.studentId, ":", w.marks);
+	//here make sure every std input is attended to
+	let stdInputs = w.inputs;
+	
+	stdInputs.forEach((inp, i)=>{
+		if (!validReturn) return;
+		if (!w.marks[i]) {
+			validReturn = false;
+			console.log(w.studentId, i, w.marks, inp); 
+			let inpContainer = document.querySelector(`.std-${key(w.studentId)}.index-${i}`);
+			inpContainer.scrollIntoView({ behavior: "smooth", block: "center", inline:"center"});
+			showToast("Please mark all answers!", "warning");
+		}
+	});
+	
+  });
+  let submStatRef = doc(db, schoolId, "db", "submission_stat", key(`${stdCourse.session}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}`))
+  if (validReturn){
+		try {
+			works.forEach(w=>{
+				w.marked = true;
+				batch.set(w.ref, w, {merge: true});
+				batch.set(submStatRef, {
+				   [module]: {
+						[lesson]: {markedCount: increment(1)}
+					}
+			  }, {merge: true});
+			 });
+			await batch.commit();
+			showToast("Markings successfully returned", "success");
+		} catch(e){
+			works.forEach(w=>w.marked = false);
+			showToast("Markings return failed. Try again.", "info");
+		}
+	 }
+  
+}
+
+/**
+ * Get valid token (auto-refresh if expired or missing)
+ */
+async function getToken() {
+    const savedToken = localStorage.getItem("gd_token");
+    const savedExpiry = Number(localStorage.getItem("gd_token_expiry"));
+
+    if (savedToken && savedExpiry && Date.now() < savedExpiry) {
+        cachedToken = savedToken;
+        tokenExpiry = savedExpiry;
+        return cachedToken;
+    }
+
+    return await updateToken();
+}
+
+function key(token){
+      return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
+    }
+</script>
+</body>
+</html>

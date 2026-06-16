@@ -6,10 +6,11 @@
   <title>Quill Editor</title>
 
   <!-- Quill 2.x -->
-  <link href="/styles.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script src="courseNav.js"></script>
+<link href="course-nav.css" rel="stylesheet" />
+
 <link
   rel="stylesheet"
   href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
@@ -18,528 +19,109 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link
+  rel="stylesheet"
+  href="light.css"
+/>
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
-    :root {
-      --bg:        #0f0e13;
-      --surface:   #17161f;
-      --card:      #1e1c28;
-      --border:    #2e2c3f;
-      --accent:    #c9a84c;
-      --accent2:   #7c5cbf;
-      --text:      #e8e4d9;
-      --muted:     #7a7590;
-      --danger:    #e05c6b;
-      --toolbar-h: 56px;
-      --radius:    10px;
-      --font-ui:   'Outfit', sans-serif;
-      --font-mono: 'DM Mono', monospace;
-      --font-serif:'DM Serif Display', serif;
-      --shadow:    0 8px 40px rgba(0,0,0,0.55);
-    }
-
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-ui);
-      font-size: 15px;
-      line-height: 1.6;
-    }
-
-    /* ── Noise overlay ── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 999;
-    }
-
-    /* ── Layout ── */
-    .app {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px 20px 40px;
-      gap: 20px;
-    }
-
-    /* ── Header ── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 8px;
-      display: grid;
-      place-items: center;
-      font-size: 18px;
-      font-family: var(--font-serif);
-      color: #fff;
-      box-shadow: 0 0 18px rgba(201,168,76,0.3);
-    }
-
-    .brand h1 {
-      font-family: var(--font-serif);
-      font-size: 1.5rem;
-      font-weight: 400;
-      letter-spacing: 0.02em;
-      color: var(--text);
-    }
-
-    .brand h1 span { color: var(--accent); }
-
-    .meta-badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .badge {
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 500;
-      font-family: var(--font-mono);
-      letter-spacing: 0.05em;
-      border: 1px solid;
-    }
-
-    .badge.formula { color: var(--accent);  border-color: rgba(201,168,76,0.35); background: rgba(201,168,76,0.08); }
-    .badge.syntax  { color: #7dd3a8;         border-color: rgba(125,211,168,0.35); background: rgba(125,211,168,0.08); }
-    .badge.v2      { color: var(--muted);    border-color: var(--border); }
-
-    /* ── Stats bar ── */
-    .stats-bar {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .stat {
-      display: flex;
-      align-items: baseline;
-      gap: 5px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .stat strong {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      font-family: var(--font-mono);
-    }
-
-    /* ── Editor card ── */
-    .editor-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ── Quill toolbar override ── */
-    .ql-toolbar.ql-snow {
-      background: var(--surface);
-      border: none;
-      border-bottom: 1px solid var(--border);
-      padding: 10px 14px;
-      min-height: var(--toolbar-h);
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .ql-toolbar.ql-snow .ql-formats {
-      margin-right: 6px;
-      display: flex;
-      align-items: center;
-      gap: 1px;
-    }
-
-    .ql-toolbar.ql-snow .ql-formats:not(:last-child) {
-      border-right: 1px solid var(--border);
-      padding-right: 8px;
-    }
-
-    .ql-toolbar.ql-snow button,
-    .ql-toolbar.ql-snow .ql-picker-label {
-      color: var(--muted) !important;
-      border-radius: 5px;
-      padding: 4px 6px;
-      transition: background .15s, color .15s;
-      height: 28px;
-      display: flex;
-      align-items: center;
-    }
-
-    .ql-toolbar.ql-snow button:hover,
-    .ql-toolbar.ql-snow .ql-picker-label:hover,
-    .ql-toolbar.ql-snow button.ql-active,
-    .ql-toolbar.ql-snow .ql-picker-label.ql-active {
-      background: rgba(201,168,76,0.12) !important;
-      color: var(--accent) !important;
-    }
-
-    .ql-toolbar.ql-snow button svg,
-    .ql-toolbar.ql-snow .ql-picker-label svg { fill: currentColor !important; stroke: none !important; }
-    .ql-toolbar.ql-snow .ql-stroke { stroke: currentColor !important; fill: none !important; }
-    .ql-toolbar.ql-snow .ql-fill  { fill:   currentColor !important; }
-
-    .ql-toolbar.ql-snow .ql-picker {
-      color: var(--muted);
-    }
-
-    .ql-toolbar.ql-snow .ql-picker-options {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 6px;
-    }
-
-    .ql-toolbar.ql-snow .ql-picker-item { color: var(--text); border-radius: 5px; padding: 4px 8px; }
-    .ql-toolbar.ql-snow .ql-picker-item:hover,
-    .ql-toolbar.ql-snow .ql-picker-item.ql-selected { color: var(--accent); background: rgba(201,168,76,0.1); }
-
-    /* ── Quill container override ── */
-    .ql-container.ql-snow {
-      border: none;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      font-family: var(--font-ui);
-    }
-
-    .ql-editor {
-      flex: 1;
-      min-height: 420px;
-      color: var(--text);
-      font-size: 15.5px;
-      line-height: 1.8;
-      padding: 28px 36px;
-      background: transparent;
-      caret-color: var(--accent);
-    }
-
-    .ql-editor.ql-blank::before {
-      color: var(--muted);
-      font-style: italic;
-      font-family: var(--font-ui);
-      left: 36px;
-    }
-
-    /* Headings */
-    .ql-editor h1 { font-family: var(--font-serif); font-size: 2rem;   color: var(--text); margin-bottom: 8px; }
-    .ql-editor h2 { font-family: var(--font-serif); font-size: 1.55rem; color: var(--text); margin-bottom: 6px; }
-    .ql-editor h3 { font-family: var(--font-serif); font-size: 1.25rem; color: var(--text); margin-bottom: 6px; }
-    .ql-editor p  { margin-bottom: 10px; }
-
-    /* Blockquote */
-    .ql-editor blockquote {
-      border-left: 3px solid var(--accent);
-      padding: 12px 18px;
-      margin: 16px 0;
-      background: rgba(201,168,76,0.05);
-      border-radius: 0 6px 6px 0;
-      color: var(--muted);
-      font-style: italic;
-    }
-
-    /* Code block */
-    .ql-editor pre.ql-syntax {
-      background: #1a1823 !important;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 18px 20px;
-      font-family: var(--font-mono);
-      font-size: 13px;
-      overflow-x: auto;
-      margin: 16px 0;
-    }
-
-    /* Inline code */
-    .ql-editor code {
-      font-family: var(--font-mono);
-      background: rgba(124,92,191,0.15);
-      border: 1px solid rgba(124,92,191,0.25);
-      border-radius: 4px;
-      padding: 1px 6px;
-      font-size: 13px;
-      color: #b39ddb;
-    }
-
-    /* Links */
-    .ql-editor a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-
-    /* Highlight */
-    .ql-editor mark { background: rgba(201,168,76,0.3); color: var(--text); border-radius: 2px; padding: 0 2px; }
-
-    /* Lists */
-    .ql-editor ul, .ql-editor ol { padding-left: 22px; }
-    .ql-editor li { margin-bottom: 4px; }
-
-    /* Formula */
-    .ql-editor .ql-formula { color: var(--accent2); }
-
-    /* ── Scrollbar ── */
-    .ql-editor::-webkit-scrollbar { width: 6px; }
-    .ql-editor::-webkit-scrollbar-track { background: transparent; }
-    .ql-editor::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    /* ── Status bar ── */
-    .status-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 10px 18px;
-      border-top: 1px solid var(--border);
-      background: var(--surface);
-      font-size: 12px;
-      color: var(--muted);
-      font-family: var(--font-mono);
-    }
-
-    .status-left, .status-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .status-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: #4caf82;
-      box-shadow: 0 0 6px #4caf82;
-      display: inline-block;
-    }
-
-    /* ── Action bar ── */
-    .action-bar {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 9px 20px;
-      border-radius: 7px;
-      font-size: 13px;
-      font-family: var(--font-ui);
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      transition: all .18s;
-      letter-spacing: 0.01em;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted);
-    }
-
-    .btn-ghost:hover { background: var(--card); color: var(--text); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #b8892a);
-      color: #0f0e13;
-      border-color: transparent;
-      font-weight: 600;
-      box-shadow: 0 2px 14px rgba(201,168,76,0.25);
-    }
-
-    .btn-primary:hover {
-      box-shadow: 0 4px 22px rgba(201,168,76,0.4);
-      transform: translateY(-1px);
-    }
-
-    .btn-danger {
-      background: transparent;
-      color: var(--danger);
-      border-color: rgba(224,92,107,0.3);
-    }
-
-    .btn-danger:hover { background: rgba(224,92,107,0.08); }
-
-    /* ── Toast ── */
-    #toast {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      padding: 12px 20px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 13px;
-      color: var(--text);
-      box-shadow: var(--shadow);
-      transform: translateY(80px);
-      opacity: 0;
-      transition: all .3s cubic-bezier(.34,1.56,.64,1);
-      z-index: 9999;
-    }
-
-    #toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    #toast.success { border-color: rgba(76,175,130,0.5); }
-    #toast.info    { border-color: rgba(201,168,76,0.5); }
-
-    /* ── Responsive ── */
-    @media (max-width: 640px) {
-      .app { padding: 14px 12px 28px; gap: 14px; }
-      .brand h1 { font-size: 1.25rem; }
-      .ql-editor { padding: 18px 16px; }
-      .ql-toolbar.ql-snow { padding: 8px 10px; }
-      .status-bar { flex-direction: column; align-items: flex-start; gap: 6px; }
-    }
-
-    /* ── Entrance animation ── */
-    .editor-card {
-      animation: slideUp .5s cubic-bezier(.22,1,.36,1) both;
-      animation-delay: .1s;
-    }
-
-    header  { animation: slideUp .5s cubic-bezier(.22,1,.36,1) both; }
-    .stats-bar { animation: slideUp .5s cubic-bezier(.22,1,.36,1) both; animation-delay: .05s; }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  
-  .inlinefield {
-    width: 20ch; /* Sized by character width */
-    display: inline-block;
-      
-  }
-  .blockfield {
-    border: 2px solid #e5e7f9;
-    
-  }
-   .blockfield {
-    border-radius: 8px;
-  } 
-  
- .inlinefield, .blockfield {
-  /* Layout */
-  margin: 0 0.25rem;
-      
-  border-radius: 8px;
-    padding: 0.5rem 1rem;
-  vertical-align: middle;
-  
-  /* Sizing & Spacing */
-  
-
-    
-  /* Typography */
-  font-family: system-ui, sans-serif;
-  font-size: 0.95rem;
-  color: #1f2937;
-  
-  /* Styling & Colorful Border */
-  background-color: #ffffff;
-
-  outline: none;
-  
-  /* Smooth interaction */
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+<style>
+.ql-snow .ql-picker.ql-radiogroup {
+    width: 140px;
 }
 
-/* Hover State */
-.blockfield:hover, .inlinefield:hover {
-  border-color: #cbd5e1;
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-label::before {
+    content: "Radio Options";
 }
 
-/* Colorful Focus State */
-.blockfield:focus, .inlinefield:focus {
-  border-color: transparent;
-  /* Creates a vibrant purple-to-pink glow */
-  background-image: linear-gradient(white, white), 
-                    linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="2"]::before {
+    content: "2 Options Group";
 }
 
-/* Placeholder Styling */
-.inlinefield::placeholder {
-  color: #9ca3af;
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="3"]::before {
+    content: "3 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="4"]::before {
+    content: "4 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="5"]::before {
+    content: "5 Options Group";
+}
+
+#optionsContainer {
+	border: 1px solid white;
+}
+
+#optionsContainer hr {
+	
+	background: white;
+}
+
+.toolbar {
+border: 4px solid red;
+
 }
   
-  
-  
-  .ql-editor .ql-multiline-embed {
-  margin: 8px 0;
-  border-radius: 8px;
-  border: 1px solid rgba(96, 165, 250, 0.25);
-  border-left: 3px solid #60a5fa;
-  background: rgba(96, 165, 250, 0.04);
-  overflow: hidden;
-  transition: border-color .18s;
+  label[for="acceptsSubm"]{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+    font-size:1rem;
+    font-weight:500;
+    color:#333;
+    user-select:none;
 }
 
-.ql-editor .ql-multiline-embed:focus-within {
-  border-color: rgba(96, 165, 250, 0.6);
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+#acceptsSubm{
+    appearance:none;
+    -webkit-appearance:none;
+
+    width:20px;
+    height:20px;
+
+    border:2px solid #cbd5e1;
+    border-radius:6px;
+
+    display:grid;
+    place-items:center;
+
+    cursor:pointer;
+    transition:.25s;
+    background:white;
 }
 
-.ql-multiline-inner {
-  display: block;
-  width: 100%;
-  min-height: 72px;
-  padding: 12px 16px;
-  resize: none;
-  overflow: hidden;
-
-  /* Inherit editor feel */
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #cbd5e1;
-  font-family: 'DM Mono', monospace;
-  font-size: 0.9em;
-  line-height: 1.75;
-  white-space: pre-wrap;
-  word-break: break-word;
-  caret-color: #60a5fa;
+#acceptsSubm:hover{
+    border-color:#2563eb;
 }
 
-.ql-multiline-i::placeholder {
-  color: #475569;
+#acceptsSubm::before{
+    content:"✓";
+    font-size:13px;
+    color:white;
+
+    transform:scale(0);
+    transition:.2s ease;
 }
 
-  </style>
+#acceptsSubm:checked{
+    background:#2563eb;
+    border-color:#2563eb;
+}
+
+#acceptsSubm:checked::before{
+    transform:scale(1);
+}
+
+#acceptsSubm:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 4px rgba(37,99,235,.2);
+}
+</style>
+
 </head>
 <body>
 <div class="app">
@@ -548,103 +130,27 @@
   <header>
     <div class="brand">
       <div class="brand-icon">DH</div>
-      <h1>Interactive Content <span>Studio</span></h1>
+      <h1 id="title"></h1>
     </div>
-    <div class="meta-badges">
-      <span class="badge v2">v2.x</span>
-      <span class="badge formula">∑ Formula</span>
-      <span class="badge syntax">&lt;/&gt; Syntax</span>
-    </div>
+
   </header>
+      <div id="courseNavElm" class="meta-badges">
+    </div>
 
   <!-- Stats -->
   <div class="stats-bar">
-    <div class="stat"><strong id="wc">0</strong> words</div>
-    <div class="stat"><strong id="cc">0</strong> chars</div>
-    <div class="stat"><strong id="lc">1</strong> lines</div>
-    <div class="stat"><strong id="rt">0 min</strong> read</div>
+    <div class="stat"><span id="moduleTitle"></span> > <strong id="lessonTitle"></strong> </div>
   </div>
 
   <!-- Editor card -->
   <div class="editor-card">
-    <div id="toolbar">
-      <span class="ql-formats">
-        <select class="ql-header">
-          <option selected></option>
-          <option value="1">H1</option>
-          <option value="2">H2</option>
-          <option value="3">H3</option>
-        </select>
-        <select class="ql-font"></select>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-bold"></button>
-        <button class="ql-italic"></button>
-        <button class="ql-underline"></button>
-        <button class="ql-strike"></button>
-      </span>
-      <span class="ql-formats">
-        <select class="ql-color"></select>
-        <select class="ql-background"></select>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-list" value="ordered"></button>
-        <button class="ql-list" value="bullet"></button>
-        <button class="ql-indent" value="-1"></button>
-        <button class="ql-indent" value="+1"></button>
-      </span>
-      <span class="ql-formats">
-        <select class="ql-align"></select>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-blockquote"></button>
-        <button class="ql-code-block"></button>
-        <button class="ql-code"></button>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-formula"></button>
-        <button class="ql-link"></button>
-        <button class="ql-image"></button>
-        <button class="ql-video"></button>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-inlinefield">Inline Field</button>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-blockfield">Block Field</button>
-      </span>
-      <span class="ql-formats">
-        <button class="ql-checkbox" value="checkbox">Check Box</button>
-        <!--select class="ql-radiogroup">
-          <option selected>Radio Buttons</option>
-          <option value="2">Radio of 2 Buttons</option>
-          <option value="3">Radio of 3 Buttons</option>
-          <option value="4">Radio of 4 Buttons</option>
-          <option value="5">Radio of 5 Buttons</option -->
-                   
-        </select>
-
-      </span>
-      <span class="ql-formats">
-        <button class="ql-clean"></button>
-      </span>
-    </div>
+	
+	<div id="optionsContainer" class="inactive">
+	
+	</div>
     <div id="editor">
       <h1>Welcome to IDC Studio ✦</h1>
-      <p>A powerful, feature-rich rich-text editor — with <strong>question support</strong>, <strong>syntax highlighting</strong> and many <strong>more!</strong></p>
-      <h2>Video Example</h2>
-      click on video icon on the toolbar
-      <h2>Formula Example</h2>
-      <p>Inline math is rendered beautifully. Click the <em>formula</em> button (∑) in the toolbar to insert LaTeX formulas like the quadratic formula or Euler's identity.</p>
-      <h2>Code Block</h2>
-      <pre class="ql-syntax">// Syntax-highlighted code block
-function fibonacci(n) {
-  if (n &lt;= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-}
-
-console.log(fibonacci(10)); // 55</pre>
-      <blockquote>Quill is a free, open source WYSIWYG editor built for the modern web. — Quill.js</blockquote>
+     Loading...
     </div>
 
     <!-- Status bar -->
@@ -661,10 +167,9 @@ console.log(fibonacci(10)); // 55</pre>
 
   <!-- Action bar -->
   <div class="action-bar">
-    <button class="btn btn-danger" onclick="clearEditor()">Clear</button>
-    <button class="btn btn-ghost" onclick="copyHTML()">Copy HTML</button>
-    <button class="btn btn-ghost" onclick="downloadHTML()">Export HTML</button>
-    <button class="btn btn-primary" onclick="saveContent()">Save Draft</button>
+    <button class="btn btn-danger" id="clearBtn">Clear</button>
+   
+    <button class="btn btn-primary" onclick="saveContent()">Save</button>
   </div>
 
 </div>
@@ -675,254 +180,204 @@ console.log(fibonacci(10)); // 55</pre>
 <!-- Quill 2.x core -->
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
+<script src="customs.js"></script>
+<script src="toolbar.js"></script>
 <script>
-
-/* Customization */
-  const Inline = Quill.import('blots/inline');
-
-class InlinefieldBlot extends Inline {
-  static blotName = 'inlinefield';
-  static tagName = 'span';
-  static className = 'inlinefield'; // avoids clashing with other spans
-
-  static create(value) {
-    const node = super.create(value);
-    node.setAttribute('data-field', value);
-    
-    return node;
-  }
-
-  static formats(node) {
-    return node.getAttribute('data-field') ?? true;
-  }
-}
-
-
-//Quill.register('formats/inlinefield', InlinefieldBlot, true);
-  
-Quill.register(InlinefieldBlot);
-
-
-class CheckboxBlot extends Inline {
-  static blotName  = 'checkbox';
-  static tagName   = 'span';
-  static className = 'ql-checkbox';
-
-  static create(value) {
-   // super();
-    const node = document.createElement("span");
-    node.setAttribute('contenteditable', 'false');
-    node.dataset.checked = value.checked? 'true' : 'false';
-    node.dataset.label   = node.dataset.checked=="true"? "[✓]" : "[ ]";
-    
-       // ── Label ──────────────────────────────────────────────────
-    const label = document.createElement('span');
-    label.className   = 'ql-checkbox-text';
-    label.innerHTML = node.dataset.label;
-
-    // ── Toggle ─────────────────────────────────────────────────
-    node.addEventListener('click', e => {
-   
-      //alert(node.dataset.checked);
-      node.dataset.checked = !(node.dataset.checked=="true");
-     // alert(node.dataset.checked);
-      let checked = node.dataset.checked;
-        let label = document.createElement('span');
-      label.classList.toggle('is-checked', checked+"");
-      label.classList.toggle('is-checked', checked+"");
-
-      node.dataset.label   = node.dataset.checked=="true"? "[✓]" : "[  ]";
-      label.className   = 'ql-checkbox-text';
-      label.innerHTML = node.dataset.label;
-      node.innerHTML = "<strong>"+label.innerHTML+"</strong>" ;// node.dataset.label;
-      
-    });
-
-  
-
-    node.innerHTML = label.innerHTML 
-    return node;
-  }
-
-  // ── Never split — atomic ───────────────────────────────────
-  
-
-  static value(node) {
-    return {
-      checked: node.dataset.checked === 'true',
-      label:   node.dataset.label   ?? ''
-    };
-  }
-
-  static formats(node) {
-    return CheckboxBlot.value(node);
-  }
-}
-
-Quill.register(CheckboxBlot);
-
-const Block = Quill.import('blots/block');
-
-class BlockfieldBlot extends Block {
-  static blotName = 'blockfield';
-  static tagName = 'div';
-  static className = "blockfield";
-  // Allow newlines to live inside
-  
-}
-Quill.register(BlockfieldBlot);
-
-
-
-const BlockEmbed = Quill.import('blots/block/embed');
-
-class MultilineEmbed extends BlockEmbed {
-  static blotName = 'multiline';
-  static tagName  = 'div';
-  static className = 'ql-multiline-embed';
-
-  static create(value) {
-    const node = super.create();
-     //node.setAttribute("contenteditable", false);
-    // Inner textarea — fully outside Quill's awareness
-    const area = document.createElement('textarea');
-    area.className   = 'ql-multiline-inner';
-    area.value       = typeof value === 'string' ? value : '';
-    area.placeholder = 'Type here… (Enter for new line)';
-    area.rows        = 3;
-/*
-    // Prevent ALL Quill keyboard handling while inside textarea
-    area.addEventListener('keydown', e => {
-      e.stopPropagation();
-      area.focus();
-    });
-    area.addEventListener('mousedown', e => {
-      e.stopPropagation();
-      area.focus();
-    });*/
-
-    // Auto-grow height
-    area.addEventListener('input', () => {
-      area.style.height = 'auto';
-      area.style.height = area.scrollHeight + 'px';
-      area.focus();
-      alert()
-    });
-
-    node.appendChild(area);
-    return node;
-  }
-
-  // What gets stored in the Quill delta
-  static value(node) {
-    const area = node.querySelector('textarea');
-    return area ? area.value : '';
-  }
-
-  // Called when Quill reads the blot back (e.g. getContents)
-  static formats(node) {
-    return node.dataset.multiline ?? true;
-  }
-
-  // Focus the inner textarea when blot is clicked
-  attach() {
-    super.attach();
-    this.domNode.addEventListener('click', () => {
-      this.domNode.querySelector('textarea')?.focus();
-    });
-  }
-}
-
-Quill.register('formats/multiline', MultilineEmbed, true);
-
-
-
-
-//const BlockEmbed = Quill.import('blots/block/embed');
-
-class VideoBlot extends BlockEmbed {
-  static blotName = 'video';
-  static tagName = 'iframe';
-
-  static create(url) {
-    let node = super.create();
-    node.setAttribute('src', url);
-    node.setAttribute('frameborder', '0');
-    node.setAttribute('allowfullscreen', true);
-    return node;
-  }
-  
-  static formats(node) {
-    let format = {};
-    if (node.hasAttribute('height')) {
-      format.height = node.getAttribute('height');
-    }
-    if (node.hasAttribute('width')) {
-      format.width = node.getAttribute('width');
-    }
-    return format;
-  }
-  
-  static value(node) {
-    return node.getAttribute('src');
-  }
-  
-  format(name, value) {
-    if (name === 'height' || name === 'width') {
-      if (value) {
-        this.domNode.setAttribute(name, value);
-      } else {
-        this.domNode.removeAttribute(name, value);
-      }
-    } else {
-      super.format(name, value);
-    }
-  }
-}
-
-Quill.register(VideoBlot);
+  const TOKEN_URL = "https://cfx-mainafly.netlify.app/.netlify/functions/gdserver";
+let cachedToken = null;
+let tokenExpiry = 0; // timestamp (ms)
+const params = new URLSearchParams(window.location.search);
+  const courseData = JSON.parse(window.localStorage.getItem("courseData"));
+const modules = courseData.modules;
+let moduleIndex = params.get("moduleIndex");
+let lessonIndex = params.get("lessonIndex");
+let module = modules[moduleIndex];
+let lesson = module.lessons[lessonIndex];
+title.innerHTML = `${courseData.schoolInfo.course}`;
+const fileId = lesson.idbSrc; //params.get("fileId");
+// alert(fileId);
+  lesson.selected =true;
+  lessonTitle.innerHTML = lesson.lesson;
+  moduleTitle.innerHTML = module.module;
+  renderCourseNav(courseNavElm, {modules});
+console.log(fileId);
+let token =  getToken();
+const inputModel = [];
   // ── Init Quill ──────────────────────────────────────────────
-  const quill = new Quill('#editor', {
-    theme: 'snow',
-    toolbar: '#toolbar',
-    modules: {
-      toolbar: {
-        container: '#toolbar',
-        handlers: {
-          checkbox: function (value){
-            insertCheckbox(this.quill);
+  var optionQuills = null;
+	var activeEditor = null;
+	
+	function getQuill(toolbar, editor){
+		 return new Quill(editor, {
+					theme: 'snow',
+					toolbar: toolbar,
+					modules: {
+					  toolbar: {
+						container: toolbar,
+						handlers
+					  },
+					  syntax: {
+						highlight: text =>  hljs.highlightAuto(text).value
+					  },
+					  
+					},
+					placeholder: 'Start writing something extraordinary…',
+		});
+	}
+  const handlers = { 
+		  radiogroup: function (value){
+			if (optionQuills) return;
+			
+			optionQuills = [];
+			mainToolbar.remove();
+			let mainEditorDisp = editor.style.display;
+			editor.style.display = "none";
+			optionsContainer.classList.remove("inactive");
+			const setOnFocus = (optQuill, toolbar)=>{
+				optQuill.on('selection-change', function(range, oldRange, source) {
+				  if (range) {
+					toolbar.style.display = "flex";
+				  } else {
+					toolbar.style.display = "none";
+				  }
+				});
+			};
+			
+			let indices = Array.from(
+			    { length: Number(value) },
+			    (_, i) => i
+			);
+			
+			  let headerEditor = document.createElement("div");
+			  let toolbar  = createToolbar("header-toolbar");
+			  optionsContainer.append(headerEditor);
+			  editorCard.prepend(toolbar);
+			  toolbar.style.display = "none";
+			  toolbar.classList.add("option-toolbar");
+			  let headerQuill = getQuill(toolbar, headerEditor);
+			  optionQuills.push(headerQuill);
+			  setOnFocus(headerQuill, toolbar);
+			  headerQuill.root.dataset.placeholder = "Write your question here";
+			  indices.forEach((i, c)=>{
+				let editor = document.createElement("div");
+				editor.classList.add("option-editor")
+				editor.id = "option-editor" + i;
+				optionsContainer.append(editor);
+				
+				//editorOptions.toolbar = "#" + "option-editor" + i;
+				let toolbar = createToolbar("toolbar" + i);
+				toolbar.classList.add("option-toolbar");
+				let optQuill = getQuill(toolbar, editor);
+				 editorCard.prepend(toolbar);
+				toolbar.style.display = "none";
+				
+				 optionQuills.push(optQuill);
+				 let range = optQuill.getSelection();
+				 optQuill.root.dataset.placeholder = `Write option ${i} here`;
+				  setOnFocus(optQuill, toolbar);
+				
+
+				   
+				 //quill.insertEmbed(range.index, 'checkbox', false);
+				 // the radio button above should be  added at the point of collective insertion to the main editor
+			
+			});
+		
+			optionQuills[0].focus(); //focus the header
+			
+			let btns = `<button class="insert">Insert</button><button class="cancel">Cancel</button>`;
+			let btnGroup = document.createElement("div");
+			btnGroup.classList.add("btn-group");
+			btnGroup.innerHTML = btns;
+			optionsContainer.append(btnGroup);
+			let insertBtn = btnGroup.querySelector(".insert");
+			let cancelBtn = btnGroup.querySelector(".cancel");
+			
+			insertBtn.onclick = e =>{
+				inputModel.push(undefined);
+				let index = inputModel.length - 1;
+				let options = optionQuills.map(q=>q.root.innerHTML);
+				quill.focus();
+				let range = quill.getSelection();
+				quill.insertEmbed(range.index, 'radiogroup', {index, options});
+				cancelBtn.click();
+			}
+			
+			cancelBtn.onclick = e =>{
+				optionQuills = null;
+				optionsContainer.innerHTML = "";
+				optionsContainer.classList.add("inactive");
+				//let mainEditorDisp = editor.style.display;
+				editor.style.display = mainEditorDisp;
+				editorCard.prepend(mainToolbar);
+				let optionToolbars = document.querySelectorAll(".option-toolbar");
+				Array.from(optionToolbars).forEach(tb=>tb.remove());
+			}
+			
           },
-          video: function(value){
-            let range = quill.getSelection(true);
-            quill.insertText(range.index, '\n', Quill.sources.USER);
-            let url = 'https://www.youtube.com/embed/U6SxG0mG8Gw?showinfo=0';
+		  
+          checkbox: function (value){
+			let range = this.quill.getSelection();
+			this.quill.insertEmbed(range.index, 'checkbox', false);
+          },
+		  inlinefield: function (value){
+			let range = this.quill.getSelection();
+			this.quill.insertEmbed(range.index, 'inlinefield', value);
+			
+          },
+		  multiline: function (value){
+			let range = this.quill.getSelection();
+			this.quill.insertEmbed(range.index, 'multiline', "");
+			
+          },
+          video: async function(value){
+			let url = await promptYouTubeURL();
+			
+            let range = this.quill.getSelection(true);
+            this.quill.insertText(range.index, '\n', Quill.sources.USER);
+            //let url="https://www.youtube.com/embed/Y8Tko2YC5hA?si=pzX4QqqSKgJyK7N_" 
+			
             this.quill.insertEmbed(range.index + 1, 'video', url, Quill.sources.USER);
             this.quill.formatText(range.index + 1, 1, { height: '170', width: '400' });
             this.quill.setSelection(range.index + 2, Quill.sources.SILENT);
-
+			  this.quill.focus();
           }
         }
+		
+	
+
+  const mainToolbar = createToolbar("toolbar", `
+		<span class="ql-formats">
+			<select class="ql-radiogroup">
+				<option selected>Radio Options</option>
+				<option value ="4">4 Options Group</option>
+				<option value ="3">3 Options Group</option>
+				<option value ="2">3 Options Group</option>
+				<option value ="5">5 Options Group</option>
+				
+			</select>
+       </span>`);
+  
+  const editorCard = document.querySelector(".editor-card");
+  editorCard.prepend(mainToolbar);
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+	toolbar: mainToolbar,
+    modules: {
+      toolbar: {
+        container: mainToolbar,
+        handlers
       },
       syntax: {
-        highlight: text => hljs.highlightAuto(text).value
+        highlight: text =>  hljs.highlightAuto(text).value
       },
       
     },
     placeholder: 'Start writing something extraordinary…',
-  });
-
+  } );
+//quill.disable();
   // ── Stats ───────────────────────────────────────────────────
   function updateStats() {
-    const text  = quill.getText().trim();
-    const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
-    const chars = text.length;
-    const lines = quill.getLines().length;
-    const rt    = Math.max(1, Math.ceil(words / 200));
-
-    document.getElementById('wc').textContent = words.toLocaleString();
-    document.getElementById('cc').textContent = chars.toLocaleString();
-    document.getElementById('lc').textContent = lines.toLocaleString();
-    document.getElementById('rt').textContent = rt + ' min';
   }
 
   // ── Selection info ──────────────────────────────────────────
@@ -954,22 +409,38 @@ Quill.register(VideoBlot);
   function saveContent() {
     const delta = JSON.stringify(quill.getContents());
     try {
-      localStorage.setItem('quill-draft', delta);
+    getToken()
+    .then(t=>{
+      
+      updateFileContent(fileId, quill.getContents(), t)
+	  .then(e=>{
+		localStorage.setItem('quill-draft', delta);
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       document.getElementById('last-saved').textContent = `Saved at ${now}`;
       showToast('✓ Draft saved to local storage', 'success');
+	  })
+            
+
+    });
+    
     } catch(e) {
       showToast('Could not save — storage unavailable', 'info');
     }
   }
 
   // Load saved draft on boot
+  
   try {
-    const saved = localStorage.getItem('quill-draft');
-    if (saved) {
-      quill.setContents(JSON.parse(saved));
+    token.then(t=>{
+      getFileContent(fileId, t)
+      .then(content=>{
+	  console.log(JSON.stringify(content));
+       quill.setContents(content);
       showToast('Draft restored from last session', 'info');
-    }
+
+      });
+    })
+    
   } catch(e) {}
 
   // ── Clear ───────────────────────────────────────────────────
@@ -1029,20 +500,264 @@ Quill.register(VideoBlot);
   
   
   
+quill.root.addEventListener('keydown', (event) => {
+	 //event.preventDefault()
+	// event.stopPropagation();
 
-// Insert at cursor
-function insertCheckbox(quill) {
-  const range = quill.getSelection(true);
-  quill.insertEmbed(range.index, 'checkbox', {
-    checked: false
-  }, 'user');
+	return;
+  // Check if you are typing inside a specific input/textarea context
+  if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault(); // Overwrites Quill/Browser save shortcut
+    console.log('Save intercepted!');
+  }
+});
 
-  // Move cursor past it (length = 1)
-  quill.setSelection(range.index + 1, 0, 'silent');
+
+
+
+
+function promptYouTubeURL() {
+  return new Promise((resolve) => {
+    // ===== Overlay =====
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0,0,0,0.6)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = 9999;
+
+    // ===== Modal =====
+    const modal = document.createElement('div');
+    modal.style.width = '420px';
+    modal.style.background = '#fff';
+    modal.style.borderRadius = '12px';
+    modal.style.padding = '20px';
+    modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+    modal.style.fontFamily = 'Arial, sans-serif';
+
+    // ===== Title =====
+    const title = document.createElement('h3');
+    title.innerText = 'Insert YouTube Video';
+    title.style.margin = '0 0 10px 0';
+
+    // ===== Description =====
+    const desc = document.createElement('p');
+    desc.innerText = 'Paste a YouTube video URL below:';
+    desc.style.fontSize = '13px';
+    desc.style.color = '#555';
+
+    // ===== Input =====
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'https://youtube.com/watch?v=...';
+    input.style.width = '100%';
+    input.style.padding = '10px';
+    input.style.marginTop = '10px';
+    input.style.border = '1px solid #ccc';
+    input.style.borderRadius = '6px';
+    input.style.outline = 'none';
+
+    // ===== Button Row =====
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.justifyContent = 'flex-end';
+    btnRow.style.gap = '10px';
+    btnRow.style.marginTop = '15px';
+
+    // ===== Cancel Button =====
+    const cancelBtn = document.createElement('button');
+    cancelBtn.innerText = 'Cancel';
+    cancelBtn.style.padding = '8px 12px';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.borderRadius = '6px';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.background = '#eee';
+
+    // ===== Insert Button =====
+    const insertBtn = document.createElement('button');
+    insertBtn.innerText = 'Insert';
+    insertBtn.style.padding = '8px 12px';
+    insertBtn.style.border = 'none';
+    insertBtn.style.borderRadius = '6px';
+    insertBtn.style.cursor = 'pointer';
+    insertBtn.style.background = '#2d6cdf';
+    insertBtn.style.color = '#fff';
+
+    // ===== Validation =====
+    function isValidYouTube(url) {
+      return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
+    }
+
+    // ===== Cleanup =====
+    function close(value) {
+      document.body.removeChild(overlay);
+      resolve(value);
+    }
+
+    // ===== Events =====
+    cancelBtn.onclick = () => close(null);
+
+    insertBtn.onclick = () => {
+      const value = input.value.trim();
+
+      if (!value || !isValidYouTube(value)) {
+        input.style.border = '1px solid red';
+        return;
+      }
+
+      close(value);
+    };
+
+    // ESC key support
+    window.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') {
+        window.removeEventListener('keydown', esc);
+        close(null);
+      }
+    });
+
+    // ===== Build UI =====
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(insertBtn);
+
+    modal.appendChild(title);
+    modal.appendChild(desc);
+    modal.appendChild(input);
+    modal.appendChild(btnRow);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    input.focus();
+  });
+}
+
+async function getFileContent(fileId, accessToken) {
+    if (!fileId) {
+        throw new Error("Missing file ID");
+    }
+
+    const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        }
+    );
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        throw new Error(text);
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return text;
+    }
+}
+  async function updateFileContent(fileId, content, accessToken) {
+    if (!fileId) {
+        throw new Error("Missing file ID");
+    }
+
+    const boundary = "----drive_boundary_" + Date.now();
+
+    const metadata = {
+        mimeType: "application/json"
+    };
+
+    const body = [
+        `--${boundary}`,
+        "Content-Type: application/json; charset=UTF-8",
+        "",
+        JSON.stringify(metadata),
+        `--${boundary}`,
+        "Content-Type: application/json",
+        "",
+        JSON.stringify(content),
+        `--${boundary}--`
+    ].join("\r\n");
+
+    const res = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&supportsAllDrives=true`,
+        {
+            method: "PATCH",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": `multipart/related; boundary=${boundary}`
+            },
+            body
+        }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(
+            data.error?.message || JSON.stringify(data)
+        );
+    }
+
+    return data;
 }
   
-// Register once, correctly
-//Quill.register('modul/inlinefield', InlinefieldBlot, true);
+  
+  
+
+
+/**
+ * Fetch new token from server
+ */
+async function updateToken() {
+    try {
+        const res = await fetch(TOKEN_URL);
+        const data = await res.json();
+
+        if (!data.access_token) {
+            throw new Error("Invalid token response");
+        }
+
+        cachedToken = data.access_token;
+
+        // expires_in is in seconds → convert to ms and subtract small buffer (30s safety)
+        tokenExpiry = Date.now() + (data.expires_in * 1000) - 30000;
+
+        // optional: persist
+        localStorage.setItem("gd_token", cachedToken);
+        localStorage.setItem("gd_token_expiry", tokenExpiry);
+
+        console.log("Token updated");
+        return cachedToken;
+
+    } catch (e) {
+        console.error("Token update error:", e.message);
+        throw e;
+    }
+}
+
+/**
+ * Get valid token (auto-refresh if expired or missing)
+ */
+async function getToken() {
+    const savedToken = localStorage.getItem("gd_token");
+    const savedExpiry = Number(localStorage.getItem("gd_token_expiry"));
+
+    if (savedToken && savedExpiry && Date.now() < savedExpiry) {
+        cachedToken = savedToken;
+        tokenExpiry = savedExpiry;
+        return cachedToken;
+    }
+
+    return await updateToken();
+}
 </script>
 </body>
 </html>
