@@ -1,0 +1,160 @@
+.course-nav {
+    width: 100%;
+    font-family: Inter, system-ui, sans-serif;
+}
+
+.course-nav-container {
+    width: 100%;
+}
+
+.nav-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.separator {
+    font-size: 1.3rem;
+    color: #777;
+    font-weight: bold;
+}
+
+.nav-group {
+    position: relative;
+}
+
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    border: none;
+    outline: none;
+    cursor: pointer;
+
+    background: #fff;
+    color: #222;
+
+    padding: 12px 16px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,.08);
+
+    transition: .25s;
+}
+
+.nav-btn:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 6px 18px rgba(0,0,0,.12);
+}
+
+.nav-btn.active {
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+    color: white;
+}
+
+.nav-title {
+    max-width: 220px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chevron {
+    transition: transform .3s ease;
+    display: inline-flex;
+}
+
+.chevron.rotate {
+    transform: rotate(90deg);
+}
+
+.dropdown {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 8px);
+
+    min-width: 260px;
+    max-height: 300px;
+
+    overflow-y: auto;
+
+    background: white;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.15);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateY(-8px);
+
+    transition: .25s ease;
+
+    z-index: 1000;
+}
+
+.dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    padding: 12px 16px;
+    cursor: pointer;
+
+    transition: .2s;
+
+    border-bottom: 1px solid #eee;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: #f3f6ff;
+}
+
+.dropdown-item.selected {
+    background: #e8efff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+
+    .nav-row {
+        gap: 8px;
+    }
+
+    .nav-btn {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .nav-group {
+        flex: 1;
+        min-width: 140px;
+    }
+
+    .dropdown {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .nav-title {
+        max-width: 140px;
+    }
+}

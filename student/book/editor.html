@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quill Editor</title>
+
+  <!-- Quill 2.x -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+
+<script src="courseNav.js"></script>
+<link href="course-nav.css" rel="stylesheet" />
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link
+  rel="stylesheet"
+  href="light.css"
+/>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+<style>
+.ql-snow .ql-picker.ql-radiogroup {
+    width: 140px;
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-label::before {
+    content: "Radio Options";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="2"]::before {
+    content: "2 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="3"]::before {
+    content: "3 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="4"]::before {
+    content: "4 Options Group";
+}
+
+.ql-snow .ql-picker.ql-radiogroup .ql-picker-item[data-value="5"]::before {
+    content: "5 Options Group";
+}
+
+#optionsContainer {
+	border: 1px solid white;
+}
+
+#optionsContainer hr {
+	
+	background: white;
+}
+
+.toolbar {
+border: 4px solid red;
+
+}
+
+.correct {
+    color: green !important;
+    background: #d1e7dd !important;
+}
+
+.incorrect {
+    color: red !important;
+    background: #f8d7da !important;
+}
+
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">DH</div>
+      <h1 id="courseTitle">{COURSE NAME} <span>BOOK</span></h1>
+    </div>
+    <div class="meta-badges">
+     
+    </div>
+  </header>
+  <div id="courseNavElm"></div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat" id="moduleTitle"><strong ></strong></div>
+	<div class="stat"><strong id="cc">></strong></div>
+    <div class="stat"><strong id="lessonTitle"></strong></div>
+    
+  </div>
+
+  <!-- Editor card -->
+  <div class="editor-card">
+	
+	<div id="optionsContainer" class="inactive">
+	
+	</div>
+    <div id="editor">
+      <h1>Welcome to Interactive Digital Book ✦</h1>
+      <p>Loading.. </p>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span><span class="status-dot"></span> Ready</span>
+        <span id="sel-info">No selection</span>
+      </div>
+      <div class="status-right">
+        <span id="last-saved">Not saved yet</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    
+    <!--button class="btn btn-ghost" onclick="copyHTML()">Copy HTML</button>
+    <button class="btn btn-ghost" onclick="downloadHTML()">Export HTML</button-->
+    <button class="btn btn-primary" id="saveWork">Save Work</button> 
+    <button class="btn btn-primary" id="submitWork">Submit Work</button> 
+	
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Quill 2.x core -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+
+<script src="../../config.js"></script>
+ <script src="../../batch2.js"></script>
+<script src="customs.js"></script>
+<script src="toolbar.js"></script>
+<script type="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+  import {getFirestore, increment, doc, writeBatch, collection, setDoc, getDoc, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(firebaseConfig, "school");
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+const stdApp = initializeApp( studentsConfig, "student");
+	 const stdDb = getFirestore(stdApp);
+	 const batch = writeBatch(db);
+
+   const filesId = [];
+ 
+   
+  const TOKEN_URL = "https://cfx-mainafly.netlify.app/.netlify/functions/gdserver";
+let cachedToken = null;
+let tokenExpiry = 0; // timestamp (ms)
+
+const params = new URLSearchParams(window.location.search);
+const courseData = JSON.parse(window.localStorage.getItem("courseData"));
+const modules = courseData.modules;
+let moduleIndex = params.get("moduleIndex");
+let lessonIndex = params.get("lessonIndex");
+let moduleData = modules[moduleIndex];
+let lessonData = moduleData.lessons[lessonIndex];
+const fileId = lessonData.idbSrc; //params.get("fileId");
+// alert(fileId);
+  lessonData.selected =true;
+ 
+  renderCourseNav(courseNavElm, {modules});
+
+
+
+
+
+const [module, lesson] = [moduleData.module || moduleData.title, lessonData.lesson || lessonData.title];
+
+
+moduleTitle.innerHTML = module;
+lessonTitle.innerHTML = lesson; 
+
+const stdCourse = courseData.schoolInfo;
+courseTitle.innerHTML = `${stdCourse.course} - <span>BOOK</span>`;
+//alert(stdCourse.program);
+
+//alert(`${key(stdCourse.studentId)}`);
+let stdProgressRef = doc(stdDb, "lesson_work", key(`${key(stdCourse.session)}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}_${module}_${lesson}_${key(stdCourse.studentId)}`));
+
+// 2. Combine your variables into a single unique Document ID string
+
+// 3. Generate the reference cleanly
+
+
+let stdSubmissionRef = doc(db, schoolId, "lesson_work_submissions", key(`${stdCourse.session}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}_${module}_${lesson}`), key(stdCourse.studentId));
+
+let stdProgressDoc = await getDoc(stdProgressRef);
+var studentWork= stdProgressDoc.exists()? stdProgressDoc.data() : {
+		submitted: false,
+		inputs:[],
+		marks: [],
+		submittedOn: null,
+		studentId: stdCourse.studentId,
+		marked: false
+	};
+if (!studentWork.submitted || !studentWork.marked){ 
+	let stdSubmissionDoc = await getDoc(stdSubmissionRef);
+	if (stdSubmissionDoc.exists()){//student have submitted but unkown to the std db
+		studentWork = stdSubmissionDoc.data();
+		delete studentWork.ref;
+		console.log(JSON.stringify(studentWork));
+		await setDoc(stdProgressRef, studentWork);
+	}
+}	
+setStudentWork(studentWork);
+
+// alert(fileId);
+console.log(fileId);
+let token =  getToken();
+//const inputModel = [];
+
+ 
+	
+ 
+  
+  const editorCard = document.querySelector(".editor-card");
+
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+	
+    modules: {
+      toolbar: false,
+      syntax: {
+        highlight: text =>  hljs.highlightAuto(text).value
+      },
+      
+    },
+    placeholder: 'Start writing something extraordinary…',
+  } );
+quill.disable();
+  // ── Stats ───────────────────────────────────────────────────
+  function updateStats() {
+    
+  }
+
+ 
+
+  // ── Toast ───────────────────────────────────────────────────
+  function showToast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = ''; }, 2800);
+  }
+
+  // ── Save draft ──────────────────────────────────────────────
+  async function saveContent() {
+	let model = getInputModel();
+	studentWork.inputs =  model;
+    
+    try {
+	  await setDoc(stdProgressRef, studentWork);
+      showToast('✓ Work saved', 'success');
+    
+    } catch(e) {
+      showToast('Could not save — try again', 'info');
+    }
+  }
+
+  // Load saved draft on boot
+  
+  try {
+    token.then(t=>{
+      getFileContent(fileId, t)
+      .then(content=>{
+	  console.log(JSON.stringify(content));
+       quill.setContents(content);
+      showToast('Lesson content read', 'info');
+
+      });
+    })
+    
+  } catch(e) {}
+
+  // ── Clear ───────────────────────────────────────────────────
+  function clearEditor() {
+    if (!confirm('Clear all content?')) return;
+    quill.setContents([]);
+    showToast('Editor cleared', 'info');
+  }
+
+  
+
+  
+  
+  
+
+
+async function getFileContent(fileId, accessToken) {
+    if (!fileId) {
+        throw new Error("Missing file ID");
+    }
+
+    const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        }
+    );
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        throw new Error(text);
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return text;
+    }
+}
+  
+  
+/**
+ * Fetch new token from server
+ */
+async function updateToken() {
+    try {
+        const res = await fetch(TOKEN_URL);
+        const data = await res.json();
+
+        if (!data.access_token) {
+            throw new Error("Invalid token response");
+        }
+
+        cachedToken = data.access_token;
+
+        // expires_in is in seconds → convert to ms and subtract small buffer (30s safety)
+        tokenExpiry = Date.now() + (data.expires_in * 1000) - 30000;
+
+        // optional: persist
+        localStorage.setItem("gd_token", cachedToken);
+        localStorage.setItem("gd_token_expiry", tokenExpiry);
+
+        console.log("Token updated");
+        return cachedToken;
+
+    } catch (e) {
+        console.error("Token update error:", e.message);
+        throw e;
+    }
+}
+
+
+if (!studentWork.submitted) saveWork.onclick = e=>saveContent();
+ else saveWork.remove();
+if (studentWork.submitted){
+let subBtn = document.getElementById("submitWork");
+	subBtn.remove();
+} else submitWork.onclick = async e=>{
+  let work = getStudentWork();
+  work.inputs = getInputModel();
+  work.submittedOn = serverTimestamp(),
+  work.submitted = true;
+  work.marked = false;
+  try {
+	  await saveContent();
+	  let submStatRef = doc(db, schoolId, "db", "submission_stat", key(`${stdCourse.session}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}`))
+	  batch.set(submStatRef, {
+		   [module]: {
+				[lesson]: {submissions: increment(1)}
+			}
+	  }, {merge: true});
+	  batch.set(stdSubmissionRef, work);
+	  console.log(JSON.stringify(work));
+	  let stdProgressRef = doc(stdDb, "course_progress", key(`${stdCourse.session}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}_${stdCourse.studentId}`));
+	  await setDoc(stdProgressRef, {
+		[module]: {
+			[lesson]: {
+				completed: true
+			}
+		}
+	  }, {merge: true});
+	  
+	  await batch.commit();
+	  showToast("Work submitted for marking", "success");
+	  submitWork.remove();
+	  saveWork.remove();
+  } catch(e){
+	   showToast("Failed to submit work. Try again." + e.message, "info");
+	   console.error(e.message);
+  }
+  
+}
+
+/**
+ * Get valid token (auto-refresh if expired or missing)
+ */
+async function getToken() {
+    const savedToken = localStorage.getItem("gd_token");
+    const savedExpiry = Number(localStorage.getItem("gd_token_expiry"));
+
+    if (savedToken && savedExpiry && Date.now() < savedExpiry) {
+        cachedToken = savedToken;
+        tokenExpiry = savedExpiry;
+        return cachedToken;
+    }
+
+    return await updateToken();
+}
+
+function key(token){
+      return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
+    }
+</script>
+</body>
+</html>

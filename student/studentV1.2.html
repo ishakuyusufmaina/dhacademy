@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles/dashboard.css">
+  <title>Student Dashboard</title>
+
+  <style>
+  /* Container for each subject block */
+#subjectsProgress > div {
+  background: #fff;
+  padding: 16px;
+  margin: 12px 0;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+#subjectsProgress > div:hover {
+  transform: translateY(-3px);
+}
+
+/* Subject title */
+.subject {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 10px;
+  position: relative;
+  display: inline-block;
+}
+
+/* Badge for new class */
+.badge {
+  background: red;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* List */
+#subjectsProgress ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 10px 0 0;
+}
+
+#subjectsProgress li {
+  margin: 6px 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Links inside list items */
+#subjectsProgress a, #subjectsProgress .leaderboard {
+  color: #0b71ff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+#subjectsProgress a:hover, #subjectsProgress .leaderboard:hover {
+  text-decoration: underline;
+}
+
+    </style>
+</head>
+<body>
+
+  <div class="dashboard">
+    <div>
+      <button id="logout">Logout</button>
+    </div>
+    <hr>
+    <!-- Student Info -->
+    <div class="student-info">
+      <!--img id="studentPhoto" alt="Student Photo"-->
+      <div class="student-details">
+        <h2 id="studentName"></h2>
+        <hr>
+          <h3>
+          Section:
+          <span id="sectionElm"></span>
+        </h3>
+        <label>
+          Class:
+          <select id="classSelect"></select>
+        </label>
+      </div>
+    </div>
+  </div>
+  <hr>
+  <div class="dashboard">
+    <!-- Academic Performance -->
+    
+    <div id="subjectsProgress"></div>
+  </div>
+
+  <script src="config.js"></script>
+   <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+  import {getFirestore, getAggregateFromServer, sum, getDocs, doc, setDoc, query, collection, where, getCountFromServer, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  
+  const app = initializeApp(studentsConfig);
+  const schApp = initializeApp(firebaseConfig, "school");
+  
+  const analytics = getAnalytics(app);
+  let id= window.localStorage.getItem("id") || "";
+  id = id.replaceAll("/", "_");
+  const db = getFirestore(app);
+  const schDb = getFirestore(schApp);
+  const stdRef = doc(db, "students", id);
+  let stdDoc = await getDoc(stdRef);
+  const student = stdDoc.data()
+  if (!student.religion){
+    let schStdDoc = await getDoc(doc(schDb, schoolId, "db", "students", id));
+    student.religion = schStdDoc.data().religion || "none";
+    await setDoc(stdRef, {religion: student.religion}, {merge: true});
+    console.log("Religion updated", student.religion);
+  }
+  const terms = ["first term", "second term", "third term"];
+
+  logout.onclick = e=>{
+    window.localStorage.removeItem("id");
+    window.location.href = "signin.html";
+  }
+  
+    // ---------------------------
+    // Sample Data  25/26/1/261
+    // ---------------------------
+ /*{
+      name: "Aisha Bello",
+      classes: ["JSS 1", "JSS 2", "JSS 3"],
+      photoUrl: "https://via.placeholder.com/150"
+    };*/
+student.section = "stem";
+ let section = student.section;
+  
+console.log(section);  
+  sectionElm.textContent = section.toUpperCase();
+let sectDoc = await getDoc(doc(db, "sections", section));
+section = sectDoc.exists()?  sectDoc.data() : {};
+  let session = key(student.sessions.sort().reverse()[0]);
+  
+    // ---------------------------
+    // Render Student Info
+    // ---------------------------
+    document.getElementById("studentName").textContent = student.name;
+   // document.getElementById("studentPhoto").src = student.photoUrl;
+
+    const classSelect = document.getElementById("classSelect");
+    student.classes.forEach(cls => {
+      const option = document.createElement("option");
+      option.value = cls;
+      option.textContent = cls;
+      classSelect.appendChild(option);
+    });
+  
+  const relDict = {"muslim": "islam", "christian": "christianity"};
+  
+    // ---------------------------
+    // Build Performance Table
+    // ---------------------------
+    async function getSubjects(data) {
+       student.sessions = student.sessions;
+      let stdSession = student.sessions[0];
+      let year = stdSession.split(",")[0];
+      let term = stdSession.split(",")[1].trim();
+      console.log(term, terms);
+      term = terms.indexOf(term);
+      console.log(student.sessions);
+      if (!data.length) return;
+      const newSubjs = [];
+      
+      section.subjects ??=[];
+      let subjects = {};
+      section.subjects.forEach(subj=>{
+        subjects[subj.name] = subj;
+        console.log(subj.name);        
+      })
+      let resolver;
+      const promise = new Promise((resolve)=>{
+        resolver=resolve
+      });
+      data.forEach(async (subject, i) => {
+        //console.log(JSON.stringify(subjects));
+        const classPointSummaries =[];
+        if (!subjects[subject.name]) return;
+        let relMatching = relDict[subjects[subject.name].for.toLowerCase()];
+        console.log(relMatching, student.religion)
+        if (relMatching && relMatching!==student.religion.toLowerCase()) return;
+        if (!subjects[subject.name].active) return;        
+        let total = 0;
+        newSubjs.push({name:subject.name })        
+        total += Number(subject.exam.replace("-", 0));
+        subject.scores.forEach(score =>
+          total += Number(score.value.replace("-", 0)) 
+        );
+        newSubjs[i].assessment = total;      
+        
+        let cls = classSelect.value;
+        let q1 = query(
+           collection(db, "attendance"),
+           where("class", "==", cls.toLowerCase()),
+           where("subject", "==", newSubjs[i].name.toLowerCase()),
+           where("status", "==", "ongoing")
+        );
+        let q2 = query(
+           collection(db, "attendance"),
+           where("students", "array-contains", student.id),
+           where("class", "==", cls.toLowerCase()),
+           where("subject", "==", newSubjs[i].name.toLowerCase()),
+           where("status", "==", "ongoing")
+        );
+        //classwork count query
+        console.log(term);
+       let cwcq = query(
+           collection(db, "attendance"),
+           where("term", "==", term+""),
+           where("class", "==", cls.toLowerCase()),
+           where("subject", "==", newSubjs[i].name.toLowerCase()),
+           where("session", "==", year.replaceAll(" ", ""))
+        );
+        let totalClassworksDoc = await getAggregateFromServer(cwcq, {
+           totalClassworks: sum("classworkCount")
+          }
+        )
+        
+        let count1Snap = await getCountFromServer(q1);
+        let count2Snap = await getCountFromServer(q2);
+        let count = count1Snap.data().count - count2Snap.data().count;
+        newSubjs[i].newClass = count;
+        newSubjs[i].attendedClass = count2Snap.data().count;
+        newSubjs[i].totalClasses = count1Snap.data().count;
+        let q = query(
+           collection(db, "learnedContents"),
+           where("studentId", "==", student.id),
+           where("class", "==", cls.toLowerCase()),
+           where("subject", "==", newSubjs[i].name.toLowerCase()),
+        );
+        
+        let totalCorrect = 0;
+        let totalMarks = totalClassworksDoc
+        .data()
+        .totalClassworks;
+        //class performance
+        const performanceSumKey = (year+term+cls.toLowerCase()+newSubjs[i].name.toLowerCase()+student.id).replaceAll("/", "_").replaceAll(" ", "");
+        const pRef = doc(
+             db,
+            "performanceSummaries",
+             performanceSumKey,
+         );
+        const sumQ = query(
+          collection(db, "performanceSummaries"),
+          where("session", "==", year.replaceAll(" ", "" )),
+          where("term", "==", term+""),
+          where("class", "==", cls.toLowerCase()),
+          where("subject", "==", newSubjs[i].name.toLowerCase())         
+        )
+        let summaryDocs = await getDocs(sumQ);
+        //let summaryDoc = await getDoc(pRef);
+        let indexOfCurrent;
+        summaryDocs.forEach((d, i)=>{
+          let data = d.data();
+          data.totalMarks = totalMarks;
+          data.sc = totalMarks;
+          data.score = data.correct;
+          classPointSummaries.push(data);
+          if (data.studentId==student.id){
+            totalCorrect = data.correct;
+            indexOfCurrent = i;
+          }
+        })
+        //totalCorrect = summaryDoc.exists()? summaryDoc.data().correct : totalCorrect;
+        let currentSum = classPointSummaries[indexOfCurrent] || {};
+        classPointSummaries.sort((a, b)=> (a.correct/a.totalMarks) - (b.correct/b.totalMarks));
+        assignPositions(classPointSummaries);
+        //currentSum;
+        classPointSummaries.forEach((e, j)=> {if (e.studentId== student.id) currentSum = e });
+        let position = currentSum.position || "-";
+        console.log("l ", position, classPointSummaries.length);
+        //console.log(JSON.stringify(classPointSummaries));
+        newSubjs[i].point = totalCorrect;
+        newSubjs[i].totalMark = totalMarks;
+        newSubjs[i].relPoint = totalCorrect/totalMarks;
+        newSubjs[i].position = position;
+        newSubjs[i].participants = classPointSummaries;
+        console.log("position:" , position);
+        await resolver(newSubjs);
+      })
+     await promise;
+     return newSubjs;
+      
+    }
+
+  
+   const perfRef = doc(db, "students", key(id), "performances", session);
+   let perfDoc = await getDoc(perfRef);
+  const perfms  = perfDoc.exists()? perfDoc.data() : {};
+  
+  
+  const performances = [
+      /*{
+        name: "Mathematics",
+        scores: [
+          { name: "CA", value: 18 },
+          { name: "Test", value: 15 },
+          { name: "Exam", value: 55 }
+        ]
+      },
+      {
+        name: "English",
+        scores: [
+          { name: "CA", value: 20 },
+          { name: "Test", value: 14 },
+          { name: "Exam", value: 50 }
+        ]
+      },
+      {
+        name: "Basic Science",
+        scores: [
+          { name: "CA", value: 17 },
+          { name: "Test", value: 16 },
+          { name: "Exam", value: 58 }
+        ]
+      }*/
+    ];
+  let standard = perfms.asms;
+  delete perfms.asms;
+  for (const p in perfms){
+    let perm = perfms[p];   
+    let name = perm.subject;    
+    delete perm.subject;    
+    //console.log(JSON.stringify(perm));
+    let exam = perm.exam;
+    console.log(JSON.stringify(standard), exam);
+    let scores;
+    if (standard) 
+    scores = standard.map(s=> ({name: s.name, value: perm[s.name.toLowerCase()], subtotal: s.subtotal}))
+    else scores = Object.keys(perm).map(s=> ({name: s, value: perm[s]}))
+    performances.push({name, scores, exam})
+  }
+  let subjs = await getSubjects(performances);
+  //console.log(JSON.stringify(subjs));
+  
+  
+ // window.localStorage.setItem("class", cls);
+//   window.localStorage.setItem("subject", subject.name.toLowerCase());
+   window.localStorage.setItem("student", JSON.stringify(student));
+
+  
+  subjectsProgress.innerHTML = "";
+  subjs.forEach(subject=>{
+    subject.participants??=[];
+    //.length
+    let subjContainer = document.createElement("div");
+    subjContainer.innerHTML += `
+      <h3 class="subject">${subject.name}</h3>
+      <ul>
+         <li>Class Position: ${subject.position}</li>
+         <li class="leaderboard">Fellow Participants: ${subject.participants.length}</li>
+         <li>Class Point: ${subject.point}/${subject.totalMark}</li>
+         <li><a href="student/classes.html?class=${classSelect.value}&subject=${subject.name}">Previous Classes: ${subject.attendedClass}/${subject.totalClasses} </a></li>
+         <li><a href="student.html">Assessment: ${subject.assessment}</a></li>
+      </ul>
+    `;
+    if (subject.newClass){
+     let h = subjContainer.querySelector("h3");
+      h.innerHTML +=`<span class="badge">${subject.newClass}</span>`;
+      h.onclick = e=>{
+        let cls = classSelect.value;
+          if (!cls) return;
+          window.localStorage.setItem("class", cls);
+          window.localStorage.setItem("subject", subject.name.toLowerCase());
+          window.localStorage.setItem("student", JSON.stringify(student));
+          window.location.href = "student/class.html";
+         // console.log(subjElm.textContent);
+      }
+    }
+    subjContainer
+    .querySelector(".leaderboard")
+    .onclick = e=>{
+      window.localStorage.setItem("participants", JSON.stringify(subject.participants));
+      window.location.href = "leaderboard.html";
+
+    }
+    subjectsProgress.append(subjContainer)
+  })
+  
+  function key(token){
+    return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "");
+    //.toLowerCase();
+  }
+ 
+ function countInArray(arr, value) {
+  return arr.filter(v => v === value).length;
+}
+
+  
+ function assignPositions(students) {
+  // Defensive: ensure score and sc numeric
+  students.forEach(s => {
+    s.score = Number(s.score) || 0;
+    s.sc = Number(s.sc) || 0;
+  });
+
+  // Compute average guardedly (students with sc===0 go to the end)
+  students.sort((a, b) => {
+    const aAvg = a.sc > 0 ? (a.score / a.sc) : -Infinity;
+    const bAvg = b.sc > 0 ? (b.score / b.sc) : -Infinity;
+    // sort descending by average, and if tie, fall back to total score descending
+    if (bAvg === aAvg) return Number(b.score) - Number(a.score);
+    return bAvg - aAvg;
+  });
+
+  // Assign positions with tie-handling using tolerance
+  const EPS = 1e-9;
+  let currentPosition = 0;
+  let lastAvg = null;
+  let lastPositionAssigned = 0;
+
+  students.forEach((student, idx) => {
+    currentPosition = idx + 1;
+    const avg = student.sc > 0 ? student.score / student.sc : -Infinity;
+
+    if (lastAvg !== null && Math.abs(avg - lastAvg) <= EPS) {
+      // tie -> same position as previous
+      student.position = lastPositionAssigned;
+    } else {
+      student.position = currentPosition;
+      lastPositionAssigned = currentPosition;
+      lastAvg = avg;
+    }
+
+    // Link prev/next for convenience (clear first to avoid stale refs)
+  //  student.prev = students[idx - 1] || null;
+    //student.next = students[idx + 1] || null;
+  });
+}
+  
+//console.log(countInArray([1,2,2,3,2], 2));  // 3
+  </script>
+
+</body>
+</html>

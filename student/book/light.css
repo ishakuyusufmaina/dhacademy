@@ -1,0 +1,981 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.t {
+  display: inline-block;
+  border: 1px solid red !important;
+}
+
+:root {
+  --bg:        #f5f4f0;
+  --surface:   #ffffff;
+  --card:      #ffffff;
+  --border:    #e0ddd6;
+  --accent:    #a67c2e;
+  --accent2:   #5e3fa3;
+  --text:      #1c1a14;
+  --muted:     #7a7570;
+  --danger:    #c0394a;
+  --toolbar-h: 56px;
+  --radius:    10px;
+  --font-ui:   'Outfit', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-serif:'DM Serif Display', serif;
+  --shadow:    0 4px 24px rgba(0,0,0,0.10);
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── Subtle paper texture overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* ── Layout ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  gap: 20px;
+}
+
+/* ── Header ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-family: var(--font-serif);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(166,124,46,0.25);
+}
+
+.brand h1 {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.brand h1 span { color: var(--accent); }
+
+.meta-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  border: 1px solid;
+}
+
+.badge.formula { color: var(--accent);  border-color: rgba(166,124,46,0.4); background: rgba(166,124,46,0.08); }
+.badge.syntax  { color: #2d7a58;         border-color: rgba(45,122,88,0.35); background: rgba(45,122,88,0.07); }
+.badge.v2      { color: var(--muted);    border-color: var(--border); background: #f0eeea; }
+
+/* ── Stats bar ── */
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+/* ── Editor card ── */
+.editor-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  
+  box-shadow: var(--shadow);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+   
+}
+
+/* ── Quill toolbar override ── */
+.ql-toolbar.ql-snow {
+  background: #f9f8f5;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  min-height: var(--toolbar-h);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+   position: sticky;
+  top: 0;
+  z-index: 100;
+ 
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  margin-right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.ql-toolbar.ql-snow .ql-formats:not(:last-child) {
+  border-right: 1px solid var(--border);
+  padding-right: 8px;
+}
+
+.ql-toolbar.ql-snow button,
+.ql-toolbar.ql-snow .ql-picker-label {
+  color: var(--muted) !important;
+  border-radius: 5px;
+  padding: 4px 6px;
+  transition: background .15s, color .15s;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.ql-toolbar.ql-snow button:hover,
+.ql-toolbar.ql-snow .ql-picker-label:hover,
+.ql-toolbar.ql-snow button.ql-active,
+.ql-toolbar.ql-snow .ql-picker-label.ql-active {
+  background: rgba(166,124,46,0.10) !important;
+  color: var(--accent) !important;
+}
+
+.ql-toolbar.ql-snow button svg,
+.ql-toolbar.ql-snow .ql-picker-label svg { fill: currentColor !important; stroke: none !important; }
+.ql-toolbar.ql-snow .ql-stroke { stroke: currentColor !important; fill: none !important; }
+.ql-toolbar.ql-snow .ql-fill  { fill: currentColor !important; }
+
+.ql-toolbar.ql-snow .ql-picker {
+  color: var(--muted);
+}
+
+.ql-toolbar.ql-snow .ql-picker-options {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 6px;
+}
+
+.ql-toolbar.ql-snow .ql-picker-item { color: var(--text); border-radius: 5px; padding: 4px 8px; }
+.ql-toolbar.ql-snow .ql-picker-item:hover,
+.ql-toolbar.ql-snow .ql-picker-item.ql-selected { color: var(--accent); background: rgba(166,124,46,0.08); }
+
+/* ── Quill container override ── */
+.ql-container.ql-snow {
+  border: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-ui);
+ 
+}
+
+.editor {
+  flex: 1;
+  min-height: 420px;
+  color: var(--text);
+  font-size: 15.5px;
+  line-height: 1.8;
+  padding: 28px 36px;
+  background: transparent;
+  caret-color: var(--accent);
+}
+
+.ql-editor.ql-blank::before {
+  color: var(--muted);
+  font-style: italic;
+  font-family: var(--font-ui);
+  left: 36px;
+}
+
+/* Headings */
+.ql-editor h1 { font-family: var(--font-serif); font-size: 2rem;    color: var(--text); margin-bottom: 8px; }
+.ql-editor h2 { font-family: var(--font-serif); font-size: 1.55rem; color: var(--text); margin-bottom: 6px; }
+.ql-editor h3 { font-family: var(--font-serif); font-size: 1.25rem; color: var(--text); margin-bottom: 6px; }
+.ql-editor p  { margin-bottom: 10px; }
+
+/* Blockquote */
+.ql-editor blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 12px 18px;
+  margin: 16px 0;
+  background: rgba(166,124,46,0.05);
+  border-radius: 0 6px 6px 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Code block */
+.ql-editor pre.ql-syntax {
+  background: #f3f2ee !important;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow-x: auto;
+  margin: 16px 0;
+  color: #2e2b3a;
+}
+
+/* Inline code */
+.ql-editor code {
+  font-family: var(--font-mono);
+  background: rgba(94,63,163,0.08);
+  border: 1px solid rgba(94,63,163,0.18);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 13px;
+  color: var(--accent2);
+}
+
+/* Links */
+.ql-editor a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Highlight */
+.ql-editor mark { background: rgba(166,124,46,0.18); color: var(--text); border-radius: 2px; padding: 0 2px; }
+
+/* Lists */
+.ql-editor ul, .ql-editor ol { padding-left: 22px; }
+.ql-editor li { margin-bottom: 4px; }
+
+/* Formula */
+.ql-editor .ql-formula { color: var(--accent2); }
+
+/* ── Scrollbar ── */
+.ql-editor::-webkit-scrollbar { width: 6px; }
+.ql-editor::-webkit-scrollbar-track { background: transparent; }
+.ql-editor::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Status bar ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  background: #f9f8f5;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+}
+
+.status-left, .status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #2d9e6b;
+  box-shadow: 0 0 6px rgba(45,158,107,0.5);
+  display: inline-block;
+}
+
+/* ── Action bar ── */
+.action-bar {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 9px 20px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all .18s;
+  letter-spacing: 0.01em;
+}
+
+.btn-ghost {
+  background: #ffffff;
+  color: var(--muted);
+}
+
+.btn-ghost:hover { background: #f0eeea; color: var(--text); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #8a6020);
+  color: #ffffff;
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(166,124,46,0.22);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 20px rgba(166,124,46,0.35);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: rgba(192,57,74,0.25);
+}
+
+.btn-danger:hover { background: rgba(192,57,74,0.06); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  z-index: 9999;
+}
+
+#toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+#toast.success { border-color: rgba(45,158,107,0.45); }
+#toast.info    { border-color: rgba(166,124,46,0.45); }
+#toast.warning    { border-color: rgba(166,124,20,0.45);}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .app { padding: 14px 12px 28px; gap: 14px; }
+  .brand h1 { font-size: 1.25rem; }
+  .ql-editor { padding: 18px 16px; }
+  .ql-toolbar.ql-snow { padding: 8px 10px; }
+  .status-bar { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+/* ── Entrance animation ── */
+.editor-card {
+  animation: slideUp .5s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: .1s;
+}
+
+header     { animation: slideUp .5s cubic-bezier(.22,1,.36,1) both; }
+.stats-bar { animation: slideUp .5s cubic-bezier(.22,1,.36,1) both; animation-delay: .05s; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Inline / Block fields ── */
+.inlinefield {
+  width: 20ch;
+  display: inline-block;
+}
+
+.blockfield {
+  border: 2px solid #d1cfc9;
+  border-radius: 8px;
+}
+
+.blockfield textarea {
+	
+	height: 100%;
+}
+
+.inlinefield, .blockfield {
+  margin: 0 0.25rem;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  vertical-align: middle;
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+  color: #1f2937;
+  background-color: #faf9f7;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  border-color: #b8b4ac;
+  
+  border-color: transparent;
+  background-image: linear-gradient(#faf9f7, #faf9f7),
+                    linear-gradient(135deg, #a67c2e, #5e3fa3, #c4628a);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 0 12px rgba(94,63,163,0.15);
+}
+
+.blockfield:hover, .inlinefield:hover {
+  border-color: #b8b4ac;
+}
+
+.blockfield:focus, .inlinefield:focus {
+  border-color: transparent;
+  background-image: linear-gradient(#faf9f7, #faf9f7),
+                    linear-gradient(135deg, #a67c2e, #5e3fa3, #c4628a);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 0 12px rgba(94,63,163,0.15);
+}
+
+.inlinefield::placeholder {
+  color: #9ca3af;
+}
+
+/* ── Multiline embed ── */
+.ql-editor .ql-multiline-embed {
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid rgba(94,63,163,0.18);
+  border-left: 3px solid var(--accent2);
+  background: rgba(94,63,163,0.03);
+  overflow: hidden;
+  transition: border-color .18s;
+}
+
+.ql-editor .ql-multiline-embed:focus-within {
+  border-color: rgba(94,63,163,0.4);
+  box-shadow: 0 0 0 3px rgba(94,63,163,0.08);
+}
+
+.ql-multiline-inner {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 16px;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #2e2b3a;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.9em;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  word-break: break-word;
+  caret-color: var(--accent2);
+}
+
+.ql-multiline-inner::placeholder {
+  color: #a0a0a0;
+}
+
+/* Image */
+
+.ql-editor .image-container {
+  /* Enables a draggable handle in the bottom-right corner */
+  resize: both; 
+  /* Required: resize property fails if overflow is 'visible' */
+  overflow: auto; 
+  
+  /* Starting dimensions */
+  width: 300px;
+  height: 200px;
+  
+  /* Boundaries (Optional) */
+  min-width: 100px;
+  min-height: 100px;
+  max-width: 600px;
+  max-height: 400px;
+  
+  border: 1px solid #ccc;
+  display: inline-block;
+  cursor: pointer;
+   -webkit-user-select: none; /* Safari */
+  -moz-user-select: none;    /* Old versions of Firefox */
+  -ms-user-select: none;     /* Internet Explorer/Edge */
+  user-select: none;         /* Standard syntax */
+  
+  
+  /* Step 2: Hide scrollbar for modern Firefox, Chromium 121+, and Safari 18.2+ */
+  scrollbar-width: none; 
+  
+  /* Step 3: Hide scrollbar for Internet Explorer and legacy Edge */
+  //-ms-overflow-style: none; 
+}
+
+.ql-editor img {
+  width: 100%;
+  height: 100%;
+  /* Ensures the image fills the area beautifully without distortion */
+  object-fit: cover; 
+  /* Prevents dragging the image itself instead of the handle */
+  pointer-events: none; 
+  text-select: pointer;
+}
+
+/* Radio Group Container */
+.radiogroup, #optionsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    max-width: 500px;
+    //margin: 20px auto;
+    padding: 20px;
+	padding-top: 0px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.05),
+        0 1px 3px rgba(0,0,0,0.08);
+
+    transition: box-shadow 0.3s ease;
+}
+
+
+
+#optionsContainer:hover, .radiogroup:hover {
+    box-shadow:
+        0 8px 24px rgba(0,0,0,0.08),
+        0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* Optional Title */
+.radiogroup-title {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* Radio Option */
+
+#optionsContainer.inactive {
+	display: none;
+	
+}
+
+#optionsContainer {
+	margin: auto;
+	
+}
+
+
+.option-toolbar {
+
+	
+}
+#optionsContainer>*, .radiogroup label {
+    display: flex;
+   
+    gap: 12px;
+
+    padding: 14px 16px;
+	margin: 10px;
+    background: #fafafa;
+    border: 2px solid #ececec;
+    border-radius: 12px;
+
+   overflow: auto;
+
+    transition:
+        border-color 0.25s ease,
+        background-color 0.25s ease,
+        transform 0.15s ease,
+        box-shadow 0.25s ease;
+}
+.radiogroup label {
+	 align-items: center;
+	 cursor: pointer;
+    user-select: none;
+}
+/* Hover */
+.radiogroup label:hover, #optionsContainer>*:hover {
+    background: #f7fbff;
+    border-color: #60a5fa;
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 4px 10px rgba(96,165,250,0.15);
+}
+
+/* Active */
+.radiogroup label:active {
+    transform: translateY(0);
+}
+
+/* Radio */
+.radiogroup input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: #2563eb;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Selected */
+.radiogroup label:has(input[type="radio"]:checked) {
+    background: linear-gradient(
+        135deg,
+        #eff6ff,
+        #dbeafe
+    );
+
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 4px rgba(37,99,235,0.1);
+}
+
+/* Focus Accessibility */
+.radiogroup input[type="radio"]:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* Disabled */
+.radiogroup label:has(input[type="radio"]:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f3f4f6;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  #optionsContainer,  .radiogroup {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+  #optionsContainer,  .radiogroup label {
+        padding: 12px;
+    }
+}
+
+
+
+/* Button Group */
+.btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 20px;
+}
+
+/* Shared Button Styles */
+.btn-group button {
+    border: none;
+    outline: none;
+    cursor: pointer;
+
+    padding: 12px 24px;
+    border-radius: 10px;
+
+    font-size: 0.95rem;
+    font-weight: 600;
+
+    transition:
+        background-color 0.25s ease,
+        transform 0.15s ease,
+        box-shadow 0.25s ease,
+        opacity 0.25s ease;
+}
+
+/* Hover Lift */
+.btn-group button:hover {
+    transform: translateY(-2px);
+}
+
+/* Click Effect */
+.btn-group button:active {
+    transform: translateY(0);
+}
+
+/* Insert Button */
+.btn-group .insert {
+    background: #2563eb;
+    color: white;
+
+    box-shadow:
+        0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.btn-group .insert:hover {
+    background: #1d4ed8;
+
+    box-shadow:
+        0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+/* Cancel Button */
+.btn-group .cancel {
+    background: #ffffff;
+    color: #6b7280;
+
+    border: 1px solid #d1d5db;
+}
+
+.btn-group .cancel:hover {
+    background: #f9fafb;
+    color: #374151;
+    border-color: #9ca3af;
+}
+
+/* Focus Accessibility */
+.btn-group button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.25);
+    outline-offset: 2px;
+}
+
+/* Disabled State */
+.btn-group button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .btn-group {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .btn-group button {
+        width: 100%;
+    }
+}
+
+
+
+/* Inline Field Container */
+.inlinefield {
+    display: inline-flex;
+ 
+    gap: 10px;
+
+    padding: 8px 12px;
+
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+	text-align: center;
+	
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+		
+	
+    }
+
+/* Highlight when input is focused */
+.inlinefield:focus-within {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+/* Text Input */
+.inlinefield input {
+    flex: 1;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: 1rem;
+    color: #1f2937;
+
+    min-width: 0;
+	width:100%;
+	
+}
+
+/* Placeholder */
+.inlinefield input::placeholder {
+    color: #9ca3af;
+}
+
+/* Disabled */
+.inlinefield input:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+
+span.checkbox input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+
+    width: 18px;
+    height: 18px;
+
+    border: 2px solid #555;
+    border-radius: 4px;
+    background: white;
+
+    cursor: pointer;
+    position: relative;
+	
+}
+
+span.checkbox input[type="checkbox"]:checked {
+    background: #2196f3;
+    border-color: #2196f3;
+}
+
+span.checkbox input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+
+    left: 4px;
+    top: 0px;
+
+    width: 5px;
+    height: 10px;
+
+    border: solid white;
+    border-width: 0 2px 2px 0;
+
+    transform: rotate(45deg);
+}
+
+
+span.checkbox {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+span.checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+	
+}
+
+span.checkbox.incorrect input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+	accent-color: #ff8236; /* Changes the checked background color */
+	
+	//margin: 10px;
+	display: inline-block;
+	background: red;
+	border-color: red;
+	
+
+}
+span.checkbox.correct input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+	accent-color: #ff8236; /* Changes the checked background color */
+	
+	//margin: 10px;
+	display: inline-block;
+	background: green;
+	border-color: green;
+	
+
+}
+span.checkbox.incorrect input[type="checkbox"]::after {
+  content: "";  /* Inserts text or emoji */
+  color: #ff4500;   /* Sets the color */
+  font-weight: bold;
+    width: 18px;
+    height: 18px;
+    margin: 10px;
+	accent-color: #ff8236; /* Changes the checked background color */
+	
+
+}
+span.checkbox.correct input[type="checkbox"]::after {
+  content: "";  /* Inserts text or emoji */
+  color: #ff4500;   /* Sets the color */
+  font-weight: bold;
+    width: 18px;
+    height: 18px;
+    margin: 10px;
+	accent-color: #ff8236; /* Changes the checked background color */
+	
+
+}
+
+
+
+/* Atomic textarea embed styling */
+    .ql-multiline-embed {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
+      background: #f9f9f9;
+      margin: 10px 0;
+    }
+
+    .ql-multiline-embed textarea {
+      width: 100%;
+      min-height: 80px;
+      resize: none;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: monospace;
+    }

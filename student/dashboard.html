@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+/>
+
+<title>Student Dashboard</title>
+
+<style>
+:root{
+    --primary:#2563eb;
+    --secondary:#f8fafc;
+    --dark:#1e293b;
+    --border:#e2e8f0;
+    --shadow:0 4px 15px rgba(0,0,0,.08);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f1f5f9;
+    color:#334155;
+}
+
+/* HEADER */
+
+.header{
+    height:60px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 16px;
+    box-shadow:var(--shadow);
+    position:sticky;
+    top:0;
+    z-index:100;
+}
+
+.menu-btn{
+    font-size:26px;
+    cursor:pointer;
+    border:none;
+    background:none;
+}
+
+.school-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.school-brand img{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+    position:fixed;
+    top:0;
+    left:-250px;
+    width:250px;
+    height:100vh;
+    background:white;
+    box-shadow:var(--shadow);
+    transition:.3s;
+    z-index:200;
+}
+
+.sidebar.open{
+    left:0;
+}
+
+.sidebar-header{
+    padding:20px;
+    border-bottom:1px solid var(--border);
+}
+
+.sidebar ul{
+    list-style:none;
+}
+
+.sidebar li a{
+    display:block;
+    padding:15px 20px;
+    text-decoration:none;
+    color:#334155;
+}
+
+.sidebar li a:hover{
+    background:#f1f5f9;
+}
+
+/* OVERLAY */
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.3);
+    display:none;
+    z-index:150;
+}
+
+.overlay.show{
+    display:block;
+}
+
+/* CONTENT */
+
+.container{
+    padding:15px;
+}
+
+/* PROFILE */
+
+.profile-card{
+    background:white;
+    border-radius:16px;
+    padding:20px;
+    text-align:center;
+    box-shadow:var(--shadow);
+}
+
+.profile-card img{
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:10px;
+}
+
+.profile-card h2{
+    margin-bottom:5px;
+}
+
+.profile-card p{
+    color:#64748b;
+	text-transform: uppercase;
+}
+
+/* FILTERS */
+
+.filters{
+    margin-top:15px;
+    display:grid;
+    gap:12px;
+}
+
+.filters select{
+    width:100%;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:white;
+	text-transform: uppercase;
+}
+
+/* COURSES */
+
+.section-title{
+    margin:25px 0 15px;
+}
+
+.course-list{
+    display:grid;
+    gap:15px;
+
+}
+
+.course-card{
+    background:white;
+    border-radius:14px;
+    padding:15px;
+    box-shadow:var(--shadow);
+}
+
+.course-name{
+    font-weight:600;
+    margin-bottom:12px;
+}
+
+.course-actions{
+    display:flex;
+    gap:10px;
+}
+
+.course-actions a{
+    flex:1;
+    text-align:center;
+    padding:10px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.book-btn{
+    background:#eff6ff;
+    color:var(--primary);
+}
+
+.class-btn{
+    background:var(--primary);
+    color:white;
+}
+
+/* TABLET */
+
+@media(min-width:768px){
+
+    .filters{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .course-list{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+/* DESKTOP */
+
+@media(min-width:1024px){
+
+    .course-list{
+        grid-template-columns:repeat(3,1fr);
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+
+<nav class="sidebar" id="sidebar">
+
+    <div class="sidebar-header">
+        <h3>Menu</h3>
+    </div>
+
+    <ul>
+        <li><a href="#">Games</a></li>
+        <li><a href="#">Logout</a></li>
+    </ul>
+
+</nav>
+
+<div class="overlay" id="overlay"></div>
+
+<header class="header">
+
+    <button
+        class="menu-btn"
+        onclick="toggleMenu()"
+    >
+        ☰
+    </button>
+
+    <div
+        class="school-brand"
+        id="schoolBrand"
+    ></div>
+
+</header>
+
+<main class="container">
+
+    <div id="dashboard"></div>
+
+</main>
+<script>
+	
+	/* -----------------------------
+	 MENU
+	----------------------------- */
+
+	function toggleMenu(){
+
+		document
+			.getElementById("sidebar")
+			.classList
+			.toggle("open");
+
+		document
+			.getElementById("overlay")
+			.classList
+			.toggle("show");
+	}
+
+	document
+	.getElementById("overlay")
+	.addEventListener(
+		"click",
+		toggleMenu
+	);
+
+
+</script>
+<script src="../config.js"></script>
+<script type ="module">
+ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+  import {getFirestore, getAggregateFromServer, sum, getDocs, doc, setDoc, query, collection, where, getCountFromServer, getDoc} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+  import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+  const app = initializeApp(studentsConfig);
+  const schApp = initializeApp(firebaseConfig, "school");
+  
+  const analytics = getAnalytics(app);
+  const terms = ["first term", "second term", "third term"];
+  const id= window.localStorage.getItem("id") || "";
+  let nId = id.replaceAll("/", "_");
+  const db = getFirestore(app);
+  const schDb = getFirestore(schApp); 
+  const stdRef = doc(db, "students", nId);
+  let stdDoc = await getDoc(stdRef);
+  const student = stdDoc.data();
+  let sectDoc = await getDoc(doc(schDb,schoolId, "sections"));
+  const sectData = sectDoc.exists()?  sectDoc.data() : {};
+  const allocationRef = doc(schDb, schoolId, "classSubjectAllocation");
+  let coursesDoc = await getDoc(allocationRef);
+  const classCourses = coursesDoc.exists()? coursesDoc.data() : {};
+  var classes = student.classes.reverse();
+  var sessions = student.sessions.reverse();
+ 
+ 
+  var cls = classes[0];
+  console.log(JSON.stringify(classCourses));
+   var term = sessions[0].split(",")[1].trim().toLowerCase();
+  let termIndex= terms.indexOf(term).toString();
+  var courses = classCourses[cls][termIndex] || [];
+/* -----------------------------
+ MOCK DATABASE
+----------------------------- */
+
+const mockDashboard = {
+	classCourses,
+    schoolId: "dhacademy",
+	
+    schoolName: "DH Academy",
+
+    studentId: id,
+
+    fullname: student.name.toUpperCase(),
+
+    picUrl:
+        student.picUrl || "../std-pic.jpg",
+
+    schoolLogoUrl:
+        "../logo.png",
+
+    program:
+        student.section || "STEM",
+
+    sessions,
+
+    classes,
+
+    courses,
+
+};
+
+
+/* -----------------------------
+ HELPERS
+----------------------------- */
+
+function createOptions(items){
+
+    return items
+        .map(item =>
+            `<option>${item}</option>`
+        )
+        .join("");
+}
+
+
+/* -----------------------------
+ COURSES
+----------------------------- */
+
+function renderCourses(courses){
+	let  {
+		studentName, 
+		studentId, 
+		schoolId,
+		schoolName,
+		program,
+		session,
+		term,
+		className
+	} = mockDashboard;
+	//alert(session);
+   let params = (course)=>({
+			course, 
+			className,
+			studentName, 
+			studentId, 
+			schoolId,
+			schoolName,
+			program,
+			session,
+			term,
+  });
+   
+    return courses.map(course => `
+
+        <div class="course-card">
+
+            <div class="course-name">
+                ${course}
+            </div>
+
+            <div class="course-actions">
+
+                <a
+                    href="book/index.html?params=${encodeURIComponent(JSON.stringify(params(course)))}"
+                    class="book-btn"
+                >
+                    📘 BOOK
+                </a>
+
+                <a
+                    href="#?course=${encodeURIComponent(course)}"
+                    class="class-btn"
+                >
+                    CLASS
+                </a>
+
+            </div>
+
+        </div>
+
+    `).join("");
+
+}
+
+
+/* -----------------------------
+ DASHBOARD
+----------------------------- */
+
+function renderDashboard(dashboard){
+
+    document.getElementById(
+        "schoolBrand"
+    ).innerHTML = `
+
+        <img
+            src="${dashboard.schoolLogoUrl}"
+            alt=""
+        />
+
+        <strong>
+            ${dashboard.schoolName}
+        </strong>
+
+    `;
+   let dashboardElm = document.getElementById(
+        "dashboard"
+    );
+    dashboardElm.innerHTML = `
+
+        <section class="profile-card">
+
+            <img
+                src="${dashboard.picUrl}"
+                alt=""
+            />
+
+            <h2>
+                ${dashboard.fullname}
+            </h2>
+
+            <p>
+                ${dashboard.studentId}
+            </p>
+
+            <p>
+                ${dashboard.program}
+            </p>
+
+        </section>
+
+        <section class="filters">
+
+            <select class="sessionSelect">
+                ${createOptions(
+                    dashboard.sessions
+                )}
+            </select>
+
+            <select class="classSelect">
+                ${createOptions(
+                    dashboard.classes
+                )}
+            </select>
+
+            <select>
+                <option>
+                    ${dashboard.program}
+                </option>
+            </select>
+
+        </section>
+
+        <h3 class="section-title">
+            Courses
+        </h3>
+
+        <section class="course-list">
+
+
+        </section>
+    `;
+	
+	let courseList  = dashboardElm.querySelector(".course-list");   
+	let classSelect  = dashboardElm.querySelector(".filters .classSelect");
+	let sessionSelect  = dashboardElm.querySelector(".sessionSelect");  
+	dashboard.className = classSelect.value;
+	[dashboard.session, dashboard.term]= sessionSelect.value.split(",").map(elm=>elm.toLowerCase().trim());
+	let termIndex= terms.indexOf(dashboard.term).toString();
+	 dashboard.term = termIndex;
+	courseList.innerHTML =  renderCourses(
+                dashboard.courses
+       );
+	   
+	//alert(dashboard.session);
+	
+	let update = e=>{
+		 [dashboard.session, dashboard.term] = sessionSelect
+		 .value.split(",").map(elm=>elm.toLowerCase().trim());
+		 dashboard.className = classSelect.value;
+		 
+		 let cls =  dashboard.class;
+		 
+		 dashboard.classCourses[cls]??= {}; 
+		 dashboard.classCourses[cls][termIndex]??= []; 
+		 let courses = dashboard.classCourses[cls][termIndex] || [];
+		 dashboard.courses = courses;
+		 
+	}
+	classSelect.onchange = e=> {
+		update();
+	}
+	sessionSelect.onchange = e=> {
+		update();
+	}
+	
+}
+
+
+/* -----------------------------
+ INIT
+----------------------------- */
+
+renderDashboard(
+    mockDashboard
+);
+
+</script>
+
+</body>
+</html>
