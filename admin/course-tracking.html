@@ -190,6 +190,7 @@
   <button class="save-btn" onclick="saveTrackingData()">
     Save Tracking Data
   </button>
+  <a href="driveUpload.html">Sync for IDB</a>
 </div>
 
 <div id="modulesContainer"></div>
@@ -197,6 +198,9 @@
   </div>  
   <script src="../config.js"></script>
 <script src="../batch2.js"></script>
+ 
+  <script src="https://accounts.google.com/gsi/client"></script>
+<script src="https://apis.google.com/js/api.js"></script>
 
   
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>  <script type="module">
@@ -209,7 +213,16 @@
       setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    
+    const CLIENT_ID = "118527147839-fqqv4h9vp7nb128ro7eut77784q5rlq8.apps.googleusercontent.com";
+  const SCOPES = "https://www.googleapis.com/auth/drive.file";
+await gapi.load('client', async () => {
+    await gapi.client.init({
+        discoveryDocs: [
+            'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+        ]
+    });
+});
+  
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const terms = ["first term", "second term", "third term"];
@@ -286,6 +299,8 @@
       const meta = getMetaValues();
 
       return `${schoolId}/db/progress/${key(meta.session)}_${meta.term}_${meta.section}_${meta.className}_${meta.course}`;
+      let params = {schoolId, course: meta.course, session: meta.session, term: meta.term, program: meta.section, className: meta.className}
+      window.localStorage.setItem("params", JSON.stringify(params));
     }
 
     async function loadTrackingData() {
@@ -319,7 +334,7 @@
 
     function renderModules() {
       modulesContainer.innerHTML = "";
-
+      window.localStorage.setItem("trackingData", JSON.stringify(trackingData));
       trackingData.modules.forEach((moduleItem, moduleIndex) => {
         const card = document.createElement("div");
         card.className = "module-card";
@@ -329,7 +344,7 @@
         moduleItem.lessons.forEach((lessonItem, lessonIndex) => {
           rows += `
             <tr>
-              <td>${lessonItem.lesson}</td>
+              <td class="lesson">${lessonItem.lesson} ${lessonItem.idbSrc? "✓" : "-"}</td>
               <td>
                 <input
                   type="checkbox"
@@ -374,6 +389,16 @@
         `;
 
         modulesContainer.appendChild(card);
+        let lessonElms = Array.from(card.querySelectorAll(".lesson"));
+       lessonElms.forEach((elm, i)=>{
+         elm.ondblclick = async e=>{
+           let fileName = elm.textContent;
+           let fileId = await createEmptyJsonFile(fileName);
+           if (fileId) {moduleItem.lessons[i].idbSrc = fileId;
+                    elm.innerHTML +="✓";
+           }
+         }
+       });
       });
     }
 
@@ -467,5 +492,78 @@
       return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
     }
   
+  
+  
+  /**
+ * Creates an empty JSON file in Google Drive.
+ *
+ * @param {string} fileName
+ * @returns {Promise<string>} fileId
+ */
+async function createEmptyJsonFile(fileName) {
+
+    // Ensure user is authenticated
+    let token = gapi.client.getToken();
+
+    if (!token) {
+        token = await new Promise((resolve, reject) => {
+
+            const tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: (response) => {
+                    if (response.error) {
+                        reject(response);
+                    } else {
+                        resolve(response);
+                    }
+                }
+            });
+
+            tokenClient.requestAccessToken({
+                prompt: 'consent'
+            });
+        });
+    }
+
+    const metadata = {
+        name: fileName.endsWith('.json')
+            ? fileName
+            : `${fileName}.json`,
+        mimeType: 'application/json',
+		parents: ["0B1q1NdbFsJldflVKWWdjdXFXaTNsTHhWMGt3ZXh5amRCdXFscG45ekY5LVJhdEJhMnJxTzA"] //gd Classroom folder id
+    };
+
+    const boundary = '-------314159265358979323846';
+
+    const multipartRequestBody =
+        `--${boundary}\r\n` +
+        `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+        JSON.stringify(metadata) +
+        `\r\n--${boundary}\r\n` +
+        `Content-Type: application/json\r\n\r\n` +
+        '{}\r\n' +
+        `--${boundary}--`;
+
+    const response = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+        {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${gapi.client.getToken().access_token}`,
+                'Content-Type': `multipart/related; boundary=${boundary}`
+            },
+            body: multipartRequestBody
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(await response.text());
+    }
+
+    const result = await response.json();
+
+    return result.id;
+}
   </script></body>
 </html>

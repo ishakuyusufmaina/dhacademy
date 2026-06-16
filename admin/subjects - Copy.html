@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../config.js"></script>
+  <script src="../batch2.js"></script>
+
+  <title>Subject Reg</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    select {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      padding: 5px;
+    }
+
+    form {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    td > span {
+      padding: 8px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background-color: #1e1e1e;
+      color: #fff;
+      display: inline-block;
+      width: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #333;
+      text-align: left;
+    }
+   
+    .save-container {
+      float: right;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin: 30px auto;
+    }
+    
+    button {
+      margin-top: 1.5rem;
+      padding: 0.7rem;
+      background-color: #3f51b5;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #5c6bc0;
+    }
+    
+    button.delete {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button.delete:hover {
+      background-color: #c82333;
+    }
+
+    .class-checkbox-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .class-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #222;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <select id="setSelect">
+    <option value=""> -select set- </option>
+  </select>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Allocated Classes</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="table"></tbody>
+    </table>
+  </div>
+
+  <button id="addBtn">Add Subject</button>
+  <button id="saveBtn">Save Changes</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+    
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let data = {};
+    let currentClasses = []; // Tracks classes available for the currently selected section
+
+    let sectionRef = doc(db, schoolId, "section");
+    let sectionDoc = await getDoc(sectionRef);
+    let teachers = (await getDoc(doc(db, schoolId, "teachers"))).data();
+    
+    let user = await new Promise(resol => {
+      onAuthStateChanged(auth, u => resol(u));
+    });
+    let id = user.email.replace(/@.*/, "");
+
+    if (sectionDoc.exists()) {
+      data = sectionDoc.data();
+      for (const set in data) {
+        if (id !== schoolId && !teachers[id].adminFunctions.subjects.resources.includes(set)) continue;
+        let opt = document.createElement("option");
+        opt.value = set;
+        opt.innerHTML = set;
+        setSelect.append(opt);
+      }
+    }
+
+    // Add row function modified to accept allocated classes array
+    function addRow(subjectName = "", allocatedClasses = []) {
+      let row = document.createElement("tr");
+      
+      // Generate checkboxes for each class belonging to the section
+      let checkboxesHtml = currentClasses.map(cls => {
+        const isChecked = allocatedClasses.includes(cls) ? "checked" : "";
+        return `
+          <label class="class-checkbox-label">
+            <input type="checkbox" class="class-cls" value="${cls}" ${isChecked}>
+            ${cls}
+          </label>
+        `;
+      }).join("");
+
+      row.innerHTML = `
+        <td><span class="subject" contenteditable>${subjectName}</span></td>
+        <td><div class="class-checkbox-container">${checkboxHtml}</div></td>
+        <td><button class="delete">Remove</button></td>
+      `;
+      
+      table.appendChild(row);
+      
+      row.querySelector(".delete").onclick = e => {
+        row.remove();
+      };
+    }
+
+    addBtn.onclick = e => {
+      if (!setSelect.value) {
+        alert("Please select a section first.");
+        return;
+      }
+      addRow("", []);
+    };
+    
+    setSelect.onchange = async e => {
+      let selectedSet = setSelect.value;
+      table.innerHTML = "";
+      currentClasses = [];
+
+      if (selectedSet) {
+        // Safe check to see if the section and its classes exist in data
+        if (data[selectedSet]) {
+          currentClasses = data[selectedSet].classes || [];
+          let subjectsData = data[selectedSet].subjects || [];
+
+          // Handles both structured formats (Array of Objects or legacy Array of Strings)
+          subjectsData.forEach(subj => {
+            if (typeof subj === 'object' && subj !== null) {
+              addRow(subj.name, subj.classes || []);
+            } else {
+              // Fallback fallback if your database previously held plain strings
+              addRow(subj, []);
+            }
+          });
+        }
+      }
+    };
+    
+    saveBtn.onclick = async e => {
+      let selectedSet = setSelect.value;
+      if (!selectedSet) return;
+      
+      let updatedSubjects = [];
+      
+      // Parse each row in the UI table
+      Array.from(table.querySelectorAll("tr")).forEach(row => {
+        let subjSpan = row.querySelector(".subject");
+        if (!subjSpan) return;
+
+        let subjName = subjSpan.textContent.trim();
+        if (subjName) {
+          // Find which classes are checked for this specific subject row
+          let checkedClasses = Array.from(row.querySelectorAll(".class-cls:checked"))
+                                    .map(cb => cb.value);
+          
+          updatedSubjects.push({
+            name: subjName,
+            classes: checkedClasses
+          });
+        }
+      });
+      
+      // Update local storage object structure
+      data[selectedSet].subjects = updatedSubjects;
+      
+      // Save entire section object map safely back to firestore
+      let sectionRef = doc(db, schoolId, "section");
+      await setDoc(sectionRef, data);
+      alert("Saved successfully!");
+    };
+  </script>
+</body>
+</html>

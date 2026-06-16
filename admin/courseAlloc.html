@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Class Subject Allocation</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#f5f7fb;
+    font-family:Segoe UI,sans-serif;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+}
+
+h2{
+    margin-bottom:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+label{
+    margin-bottom:5px;
+    font-weight:600;
+}
+
+select{
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:8px;
+}
+
+.subjects{
+    margin-top:20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:10px;
+}
+
+.subject-item{
+    background:#fafafa;
+    border:1px solid #ddd;
+    padding:10px;
+    border-radius:8px;
+}
+
+.actions{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+    flex-wrap:wrap;
+}
+
+button{
+    border:none;
+    padding:12px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    color:white;
+}
+
+.save{
+    background:#2196f3;
+}
+
+.delete{
+    background:#f44336;
+}
+
+.status{
+    margin-top:15px;
+    font-weight:bold;
+}
+
+@media(max-width:600px){
+    button{
+        width:100%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h2>Class Subject Allocation</h2>
+
+<div class="grid">
+
+<div class="form-group">
+<label>Section</label>
+<select id="sectionSelect"></select>
+</div>
+
+<div class="form-group">
+<label>Class</label>
+<select id="classSelect"></select>
+</div>
+
+<div class="form-group">
+<label>Term</label>
+<select id="termSelect">
+<option value="0">First Term</option>
+<option value="1">Second Term</option>
+<option value="2">Third Term</option>
+</select>
+</div>
+
+</div>
+
+<h3 style="margin-top:20px">Subjects</h3>
+
+<div id="subjectsContainer" class="subjects"></div>
+
+<div class="actions">
+<button class="save" id="saveBtn">
+Save Allocation
+</button>
+
+<button class="delete" id="deleteBtn">
+Clear Allocation
+</button>
+</div>
+
+<div class="status" id="status"></div>
+
+</div>
+
+</div>
+
+<script src="../config.js"></script>
+<script src="../batch2.js"></script>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+import {
+getFirestore,
+doc,
+getDoc,
+setDoc
+}
+from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+//const schoolId = localStorage.getItem("schoolId");
+
+const sectionSelect = document.getElementById("sectionSelect");
+const classSelect = document.getElementById("classSelect");
+const termSelect = document.getElementById("termSelect");
+const subjectsContainer = document.getElementById("subjectsContainer");
+const statusDiv = document.getElementById("status");
+
+const sectionRef =
+doc(db, schoolId, "section");
+
+const allocationRef =
+doc(db, schoolId, "classSubjectAllocation");
+
+let sectionsData = {};
+let allocations = {};
+
+await loadData();
+
+async function loadData(){
+
+    const sectionSnap = await getDoc(sectionRef);
+    const allocSnap = await getDoc(allocationRef);
+
+    sectionsData = sectionSnap.data() || {};
+    allocations = allocSnap.data() || {};
+
+    populateSections();
+}
+
+function populateSections(){
+
+    sectionSelect.innerHTML="";
+
+    Object.keys(sectionsData).forEach(section=>{
+
+        let opt = document.createElement("option");
+        opt.value = section;
+        opt.textContent = section;
+
+        sectionSelect.appendChild(opt);
+    });
+
+    loadClasses();
+}
+
+function loadClasses(){
+
+    let section =
+    sectionSelect.value;
+
+    classSelect.innerHTML="";
+
+    sectionsData[section].classes.forEach(cls=>{
+
+        let opt = document.createElement("option");
+        opt.value = cls;
+        opt.textContent = cls;
+
+        classSelect.appendChild(opt);
+    });
+
+    loadSubjects();
+}
+
+function loadSubjects(){
+
+    let section =
+    sectionSelect.value;
+
+    let cls =
+    classSelect.value;
+
+    let term =
+    Number(termSelect.value);
+
+    subjectsContainer.innerHTML="";
+
+    let subjects =
+    sectionsData[section].subjects;
+
+    let allocated =
+    allocations[cls]?.[term] || [];
+
+    subjects.forEach(subject=>{
+
+        const checked =
+        allocated.includes(subject)
+        ? "checked"
+        : "";
+
+        subjectsContainer.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div class="subject-item">
+            <label>
+            <input
+              type="checkbox"
+              value="${subject}"
+              ${checked}
+            >
+            ${subject}
+            </label>
+        </div>
+        `
+        );
+    });
+}
+
+async function saveAllocation(){
+
+    let cls =
+    classSelect.value;
+
+    let term =
+    Number(termSelect.value);
+
+    let selected =
+    [...document.querySelectorAll(
+    "#subjectsContainer input:checked"
+    )]
+    .map(cb=>cb.value);
+
+    if(!allocations[cls]){
+
+        allocations[cls] = {
+            "firstTerm": [],
+            "secondTerm": [],
+            "thirdTerm": []
+        };
+    }
+
+    allocations[cls][term] =
+    selected;
+
+    await setDoc(
+        allocationRef,
+        allocations
+    );
+
+    statusDiv.textContent =
+    "Allocation saved successfully";
+}
+
+async function clearAllocation(){
+
+    let cls =
+    classSelect.value;
+
+    let term =
+    Number(termSelect.value);
+
+    if(!allocations[cls]) return;
+
+    allocations[cls][term] = [];
+
+    await setDoc(
+        allocationRef,
+        allocations
+    );
+
+    loadSubjects();
+
+    statusDiv.textContent =
+    "Allocation cleared";
+}
+
+sectionSelect.addEventListener(
+"change",
+loadClasses
+);
+
+classSelect.addEventListener(
+"change",
+loadSubjects
+);
+
+termSelect.addEventListener(
+"change",
+loadSubjects
+);
+
+document
+.getElementById("saveBtn")
+.addEventListener(
+"click",
+saveAllocation
+);
+
+document
+.getElementById("deleteBtn")
+.addEventListener(
+"click",
+clearAllocation
+);
+
+</script>
+
+</body>
+</html>
