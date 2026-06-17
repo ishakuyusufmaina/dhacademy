@@ -69,7 +69,7 @@
   </header>
  
     <div>
-    <a class="fw" href="../idb/contents-and-engagement.html">Contents and Engagement</a>
+    <a class="fw"  id="cande" >Contents and Engagement</a>
     <a class="fw" id="leaderboard" >Engagement Leaderboard</a>
 
   </div>
@@ -143,6 +143,7 @@ let teachersRef = doc(db, schoolId, "teachers");
     window.localStorage.setItem("term", sesion.term);
     
     leaderboard.href="../../leaderboard.html";
+	 cande.href="../idb/contents-and-engagement.html"
       //sessionSelect.firstChild.nextElementSibling.selected = true;
   }
   
@@ -155,6 +156,8 @@ let teachersRef = doc(db, schoolId, "teachers");
   let h = d.getHours()+1;
   //time.innerHTML = `${h} : {}{
   date.innerHTML = `${day}/${month}/${year}`;
+  
+ 
 
   </script>
 </body>
