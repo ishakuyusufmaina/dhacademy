@@ -151,7 +151,7 @@ class CheckboxBlot extends Embed {
 			let v = select.value;
 			node.classList.remove("correct");
 			node.classList.remove("incorrect");
-			if(!v) node.classList.add(v);
+			if(v) node.classList.add(v);
 			stdWork.marks[index] = v;
 		}
 		select.value = stdWork.marks[index];
