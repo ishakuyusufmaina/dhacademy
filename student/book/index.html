@@ -245,7 +245,7 @@ const props = JSON.parse(params.get("params"));
 	  studentId: props.studentId
     };
 	
-let stdProgressRef = doc(stdDb, "course_progress", `${key(props.session)}_${props.term}_${props.program}_${props.className}_${props.course}_${key(props.studentId)}`);
+let stdProgressRef = doc(stdDb, "course_progress", key(`${key(props.session)}_${props.term}_${props.program}_${props.className}_${props.course}_${key(props.studentId)}`));
 let stdProgressDoc = await getDoc(stdProgressRef);
 const studentProgress = stdProgressDoc.exists()? stdProgressDoc.data() : {};
 //console.log(JSON.stringify(studentProgress));
