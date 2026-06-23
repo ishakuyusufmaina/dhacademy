@@ -502,12 +502,13 @@ let submStat = submDoc.exists()? submDoc.data() : {};
       contents.push({
         title: moduleItem.module,
         lessons: moduleItem.lessons.map((lessonItem, j) => {
+		submStat[moduleItem.module][lessonItem.lesson] ??={submissions:0};
 		if (!(i+j)) console.log(1, submStat[moduleItem.module][lessonItem.lesson].submissions);
 		 submStat[moduleItem.module][lessonItem.lesson] ??={submissions:0};
 		 submStat[moduleItem.module][lessonItem.lesson].markedCount ??=0;
-		 let markCount = submStat[moduleItem.module][lessonItem.lesson].markedCount;
+		 let markedCount = submStat[moduleItem.module][lessonItem.lesson].markedCount;
 		 let submissions = submStat[moduleItem.module][lessonItem.lesson].submissions;
-         
+         console.log( lessonItem.lesson,  lessonItem.idbSrc);
 		 return {
 				 title: lessonItem.lesson,
 				  fileId: lessonItem.idbSrc,
@@ -517,6 +518,7 @@ let submStat = submDoc.exists()? submDoc.data() : {};
       })      
     });
     engageDoc = {contents}
+	//console.log(JSON.stringify(contents));
     await setDoc(engageDocRef, engageDoc, {merge: true});
     window.location.reload();
   } else {
