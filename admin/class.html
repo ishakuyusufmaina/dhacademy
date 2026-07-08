@@ -113,19 +113,20 @@ var section;
                let optG = document.createElement("optgroup");
                optG.label = key;
               let supClasses = sections[key].classes.filter(c=> classes.includes(c));
-               supClasses.forEach(clas=>optG.innerHTML +=`<option>${clas}</option>`);
+               supClasses.forEach(clas=>optG.innerHTML +=`<option data-section=${key}>${clas}</option>`);
                classSelect.append(optG);
-               classSelect.addEventListener("change", _=>{
-               if (!classes.includes(classSelect.value)) return;
-               section = key;
-               console.log(section);
-             })
+              
            });
        }
        
    })
   
-
+ classSelect.addEventListener("change", e =>{
+               if (!classSelect.value) return;
+               let opt = classSelect.options[classSelect.selectedIndex];
+			  section = opt? opt.dataset.section : opt;
+			 // alert(section);
+  })
   function addRow(result){
     //console.log(result.gender=="Male");
     //result.name = nameIn.textContent.toLowerCase().trim();
