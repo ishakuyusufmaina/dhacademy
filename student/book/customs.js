@@ -66,6 +66,7 @@ class InlinefieldBlot extends Embed {
         //input.value = value?.value || '';
         input.placeholder = value?.placeholder || '';
 		input.value = model[index];
+		input.style.width = input.value.length + "2ch";
 		let stdWork = getStudentWork();
 		if (stdWork.submitted){
 			input.disabled = true;
