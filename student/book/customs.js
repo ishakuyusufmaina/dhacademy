@@ -82,6 +82,7 @@ class InlinefieldBlot extends Embed {
 		}
 		input.addEventListener("change", e=>{
 			 model[index] = input.value;
+			 input.style.width = input.value.length + "2ch";
 		})
 		
 
