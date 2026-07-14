@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quill Editor</title>
+  <title>IDB Submissions</title>
 
   <!-- Quill 2.x -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -200,7 +200,7 @@ lessonTitle.innerHTML = lesson;
 const stdCourse = courseData.schoolInfo;
 stdCourse.className ??= stdCourse.class;
 stdCourse.program ??= stdCourse.section;
-
+const terms = ["first term", "second term", "third term"];
 courseTitle.innerHTML = `${stdCourse.course} - <span>BOOK</span>`;
 //alert(stdCourse.program);
 
@@ -213,8 +213,9 @@ let submissionsColRef = collection(db, schoolId, "lesson_work_submissions", key(
 const q = query(submissionsColRef, where("marked", "==", false), where("submitted", "==", true));
 const submDocs = await getDocs(q);
 
+const classStdRef = doc(db, schoolId, key(`${stdCourse.session}${terms[stdCourse.term]}`), key(stdCourse.class), "students");
 
-
+var classStds;
 // alert(fileId);
 console.log(fileId);
 let token =  getToken();
@@ -237,13 +238,48 @@ let token =  getToken();
 	 // console.log(JSON.stringify(content));
       submDocs.forEach(workDoc=>{
 		let work = workDoc.data();
+		
 		work.ref = workDoc.ref;
 		works.push(work);
 		console.log(work.marks);
 		
+		
 		let editorElm = document.createElement("div");
 		let stdId = document.createElement("div");
-		stdId.innerHTML = `|Submitted by ${work.studentId} on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
+		if (!work.studentName){
+			if (!classStds) {
+				getDoc(classStdRef)
+				.then(dataSnap=>{
+					classStds = dataSnap.data();
+					console.log(work.studentId, classStds);
+					let std = classStds[work.studentId];
+					work.studentName = std.name;
+					stdId.innerHTML = `|Submitted by <strong>${work.studentName.toUpperCase()}</strong> (${work.studentId}) on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
+					let ref = work.ref;
+					delete work.ref;
+					setDoc(ref, work, {merge:true})
+					.then(v=>{
+						console.log("submitted work is updated with student name", work.studentName)
+					});
+					work.ref = ref;
+				
+				})
+			} else {
+				let std = classStds[work.studentId];
+				work.studentName = std.name;
+				stdId.innerHTML = `|Submitted by <strong>${work.studentName.toUpperCase()}</strong> (${work.studentId}) on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
+				let ref = work.ref;
+					delete work.ref;
+					setDoc(ref, work, {merge:true})
+					.then(v=>{
+						console.log("submitted work is updated with student name", work.studentName)
+					});
+					work.ref = ref;
+			}  
+			
+		} else {
+			stdId.innerHTML = `|Submitted by ${work.studentName.toUpperCase()} (${work.studentId}) on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
+		}
 		let line = document.createElement("hr");
 		editorCard.append(stdId, editorElm, line);
 		renderWork(work, editorElm, content)
