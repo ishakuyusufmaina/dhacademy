@@ -73,6 +73,7 @@ class InlinefieldBlot extends Embed {
         input.placeholder = value?.placeholder || '';
 		input.value = stdInputs[index];
 		input.disabled = true;
+		input.style.width = input.value.length + "ch";
 		
         node.appendChild(input);
 		input.addEventListener('keydown', e => {
