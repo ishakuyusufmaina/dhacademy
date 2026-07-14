@@ -66,6 +66,8 @@ class InlinefieldBlot extends Embed {
         //input.value = value?.value || '';
         input.placeholder = value?.placeholder || '';
 		input.value = model[index];
+		input.style.width = input.value.length + "ch";
+		
 		let stdWork = getStudentWork();
 		if (stdWork.submitted){
 			input.disabled = true;
@@ -73,8 +75,6 @@ class InlinefieldBlot extends Embed {
 				node.classList.add("marked");
 				let marking = stdWork.marks[index];
 				node.classList.add(marking);
-				
-				
 			}
 		}
 		if (stdModel.submitted){
@@ -82,6 +82,7 @@ class InlinefieldBlot extends Embed {
 		}
 		input.addEventListener("change", e=>{
 			 model[index] = input.value;
+			 input.style.width = input.value.length + "ch";
 		})
 		
 
