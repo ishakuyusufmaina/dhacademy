@@ -427,10 +427,14 @@
       to   { opacity: 1; transform: translateY(0); }
     }
   
-  .inlinefield {
-    width: 20ch; /* Sized by character width */
+ .inlinefield {
+    width: auto; /* Sized by character width */
     display: inline-block;
       
+  }
+  .inlinefield input {
+	  width: 20ch;
+	  text-align: center; 
   }
   .blockfield {
     border: 2px solid #e5e7f9;
