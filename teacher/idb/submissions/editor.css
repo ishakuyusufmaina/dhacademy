@@ -428,10 +428,14 @@
     }
   
   .inlinefield {
-    width: 20ch; /* Sized by character width */
+    width: auto;
     display: inline-block;
       
   }
+
+.inlinefield input {
+	text-align: center;
+}
   .blockfield {
     border: 2px solid #e5e7f9;
     
