@@ -3,11 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IDB Submissions</title>
+  <title>Quill Editor</title>
 
   <!-- Quill 2.x -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+<script src="courseNav.js"></script>
+<link href="course-nav.css" rel="stylesheet" />
 
 <link
   rel="stylesheet"
@@ -62,36 +64,62 @@
 border: 4px solid red;
 
 }
-
- select.marking {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-
-    opacity: 0.15;
-    transition: opacity 0.25s ease;
-
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(2px);
+  
+  label[for="acceptsSubm"]{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    cursor:pointer;
+    font-size:1rem;
+    font-weight:500;
+    color:#333;
+    user-select:none;
 }
 
-select.marking:hover,
-select.marking:focus {
-    opacity: 1;
+#acceptsSubm{
+    appearance:none;
+    -webkit-appearance:none;
+
+    width:20px;
+    height:20px;
+
+    border:2px solid #cbd5e1;
+    border-radius:6px;
+
+    display:grid;
+    place-items:center;
+
+    cursor:pointer;
+    transition:.25s;
+    background:white;
 }
 
-
-.correct {
-    color: green !important;
-    background: #d1e7dd !important;
+#acceptsSubm:hover{
+    border-color:#2563eb;
 }
 
-.incorrect {
-    color: red !important;
-    background: #f8d7da !important;
+#acceptsSubm::before{
+    content:"✓";
+    font-size:13px;
+    color:white;
+
+    transform:scale(0);
+    transition:.2s ease;
 }
 
+#acceptsSubm:checked{
+    background:#2563eb;
+    border-color:#2563eb;
+}
+
+#acceptsSubm:checked::before{
+    transform:scale(1);
+}
+
+#acceptsSubm:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 4px rgba(37,99,235,.2);
+}
 </style>
 
 </head>
@@ -102,28 +130,28 @@ select.marking:focus {
   <header>
     <div class="brand">
       <div class="brand-icon">DH</div>
-      <h1 id="courseTitle">{COURSE NAME} <span>BOOK</span></h1>
+      <h1 id="title"></h1>
     </div>
-    <div class="meta-badges">
-      <span class="badge v2">v2.x</span>
-      <span class="badge formula">∑ Formula</span>
-      <span class="badge syntax">&lt;/&gt; Syntax</span>
-    </div>
+
   </header>
+      <div id="courseNavElm" class="meta-badges">
+    </div>
 
   <!-- Stats -->
   <div class="stats-bar">
-    <div class="stat" id="moduleTitle"><strong ></strong></div>
-	<div class="stat"><strong id="cc">></strong></div>
-    <div class="stat"><strong id="lessonTitle"></strong></div>
-    
+    <div class="stat"><span id="moduleTitle"></span> > <strong id="lessonTitle"></strong> </div>
   </div>
 
   <!-- Editor card -->
   <div class="editor-card">
 	
-</div>
-   
+	<div id="optionsContainer" class="inactive">
+	
+	</div>
+    <div id="editor">
+      <h1>Welcome to IDC Studio ✦</h1>
+     Loading...
+    </div>
 
     <!-- Status bar -->
     <div class="status-bar">
@@ -139,12 +167,9 @@ select.marking:focus {
 
   <!-- Action bar -->
   <div class="action-bar">
-    <button class="btn btn-danger" id="clearWork">Clear</button>
-    <!--button class="btn btn-ghost" onclick="copyHTML()">Copy HTML</button>
-    <button class="btn btn-ghost" onclick="downloadHTML()">Export HTML</button-->
-    <button class="btn btn-primary" id="saveWork">Save Markings</button> 
-    <button class="btn btn-primary" id="submitWork">Return Markings</button> 
-	
+    <button class="btn btn-danger" id="clearBtn">Clear</button>
+   
+    <button class="btn btn-primary" onclick="saveContent()">Save</button>
   </div>
 
 </div>
@@ -155,171 +180,221 @@ select.marking:focus {
 <!-- Quill 2.x core -->
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
 
-<script src="../../../config.js"></script>
- <script src="../../../batch2.js"></script>
 <script src="customs.js"></script>
 <script src="toolbar.js"></script>
-<script type="module">
- import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-analytics.js";
-  import {getFirestore, increment, where, doc, writeBatch, collection, getDocs, query, setDoc, getDoc, serverTimestamp} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-  import {getAuth, signOut, onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-
-  const app = initializeApp(firebaseConfig, "school");
-  const analytics = getAnalytics(app);
-  const auth = getAuth(app);
-    const db = getFirestore(app);
-	 const stdApp = initializeApp( studentsConfig, "student");
-	 const stdDb = getFirestore(stdApp);
-	 var batch = writeBatch(db);
-	 const renewBatch = ()=> batch = writeBatch(db);
-
-   const filesId = [];
- 
-   
+<script>
   const TOKEN_URL = "https://cfx-mainafly.netlify.app/.netlify/functions/gdserver";
 let cachedToken = null;
 let tokenExpiry = 0; // timestamp (ms)
-
 const params = new URLSearchParams(window.location.search);
   const courseData = JSON.parse(window.localStorage.getItem("courseData"));
 const modules = courseData.modules;
 let moduleIndex = params.get("moduleIndex");
 let lessonIndex = params.get("lessonIndex");
-let moduleData = modules[moduleIndex];
-let lessonData = moduleData.lessons[lessonIndex];
-
-const fileId = lessonData.idbSrc; //params.get("fileId");
-
-const [module, lesson] = [moduleData.module, lessonData.lesson];
-
-
-moduleTitle.innerHTML = module;
-lessonTitle.innerHTML = lesson; 
-
-const stdCourse = courseData.schoolInfo;
-stdCourse.className ??= stdCourse.class;
-stdCourse.program ??= stdCourse.section;
-const terms = ["first term", "second term", "third term"];
-courseTitle.innerHTML = `${stdCourse.course} - <span>BOOK</span>`;
-//alert(stdCourse.program);
-
-
-// 2. Combine your variables into a single unique Document ID string
-
-// 3. Generate the reference cleanly
-
-let submissionsColRef = collection(db, schoolId, "lesson_work_submissions", key(`${stdCourse.session}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}_${module}_${lesson}`));
-const q = query(submissionsColRef, where("marked", "==", false), where("submitted", "==", true));
-const submDocs = await getDocs(q);
-
-const classStdRef = doc(db, schoolId, key(`${stdCourse.session}${terms[stdCourse.term]}`), key(stdCourse.class), "students");
-
-var classStds;
+let module = modules[moduleIndex];
+let lesson = module.lessons[lessonIndex];
+title.innerHTML = `${courseData.schoolInfo.course}`;
+const fileId = lesson.idbSrc; //params.get("fileId");
 // alert(fileId);
+  lesson.selected =true;
+  lessonTitle.innerHTML = lesson.lesson;
+  moduleTitle.innerHTML = module.module;
+  renderCourseNav(courseNavElm, {modules});
 console.log(fileId);
 let token =  getToken();
-//const inputModel = [];
-
- 
+const inputModel = [];
+  // ── Init Quill ──────────────────────────────────────────────
+  var optionQuills = null;
+	var activeEditor = null;
 	
- 
-  
- const editorCard = document.querySelector(".editor-card");
- 
- // Load saved draft on boot
-  
-  const works = [];
- 
-  try {
-    token.then(t=>{
-      getFileContent(fileId, t)
-      .then(content=>{
-	 // console.log(JSON.stringify(content));
-      submDocs.forEach(workDoc=>{
-		let work = workDoc.data();
-		
-		work.ref = workDoc.ref;
-		works.push(work);
-		console.log(work.marks);
-		
-		
-		let editorElm = document.createElement("div");
-		let stdId = document.createElement("div");
-		if (!work.studentName){
-			if (!classStds) {
-				getDoc(classStdRef)
-				.then(dataSnap=>{
-					classStds = dataSnap.data();
-					console.log(work.studentId, classStds);
-					let std = classStds[work.studentId];
-					work.studentName = std.name;
-					stdId.innerHTML = `|Submitted by <strong>${work.studentName.toUpperCase()}</strong> (${work.studentId}) on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
-					let ref = work.ref;
-					delete work.ref;
-					setDoc(ref, work, {merge:true})
-					.then(v=>{
-						console.log("submitted work is updated with student name", work.studentName)
-					});
-					work.ref = ref;
-				
-				})
-			} else {
-				let std = classStds[work.studentId];
-				work.studentName = std.name;
-				stdId.innerHTML = `|Submitted by <strong>${work.studentName.toUpperCase()}</strong> (${work.studentId}) on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
-				let ref = work.ref;
-					delete work.ref;
-					setDoc(ref, work, {merge:true})
-					.then(v=>{
-						console.log("submitted work is updated with student name", work.studentName)
-					});
-					work.ref = ref;
-			}  
+	function getQuill(toolbar, editor){
+		 return new Quill(editor, {
+					theme: 'snow',
+					toolbar: toolbar,
+					modules: {
+					  toolbar: {
+						container: toolbar,
+						handlers
+					  },
+					  syntax: {
+						highlight: text =>  hljs.highlightAuto(text).value
+					  },
+					  
+					},
+					placeholder: 'Start writing something extraordinary…',
+		});
+	}
+  const handlers = { 
+		  radiogroup: function (value){
+			if (optionQuills) return;
 			
-		} else {
-			stdId.innerHTML = `|Submitted by ${work.studentName.toUpperCase()} (${work.studentId}) on ${work.submittedOn.toDate().toLocaleDateString()}, at ${work.submittedOn.toDate().toLocaleTimeString()}`;
-		}
-		let line = document.createElement("hr");
-		editorCard.append(stdId, editorElm, line);
-		renderWork(work, editorElm, content)
-	  });
-      showToast('Lesson content read', 'info');
-      });
-    })
-    
-  } catch(e) {}
+			optionQuills = [];
+			mainToolbar.remove();
+			let mainEditorDisp = editor.style.display;
+			editor.style.display = "none";
+			optionsContainer.classList.remove("inactive");
+			const setOnFocus = (optQuill, toolbar)=>{
+				optQuill.on('selection-change', function(range, oldRange, source) {
+				  if (range) {
+					toolbar.style.display = "flex";
+				  } else {
+					toolbar.style.display = "none";
+				  }
+				});
+			};
+			
+			let indices = Array.from(
+			    { length: Number(value) },
+			    (_, i) => i
+			);
+			
+			  let headerEditor = document.createElement("div");
+			  let toolbar  = createToolbar("header-toolbar");
+			  optionsContainer.append(headerEditor);
+			  editorCard.prepend(toolbar);
+			  toolbar.style.display = "none";
+			  toolbar.classList.add("option-toolbar");
+			  let headerQuill = getQuill(toolbar, headerEditor);
+			  optionQuills.push(headerQuill);
+			  setOnFocus(headerQuill, toolbar);
+			  headerQuill.root.dataset.placeholder = "Write your question here";
+			  indices.forEach((i, c)=>{
+				let editor = document.createElement("div");
+				editor.classList.add("option-editor")
+				editor.id = "option-editor" + i;
+				optionsContainer.append(editor);
+				
+				//editorOptions.toolbar = "#" + "option-editor" + i;
+				let toolbar = createToolbar("toolbar" + i);
+				toolbar.classList.add("option-toolbar");
+				let optQuill = getQuill(toolbar, editor);
+				 editorCard.prepend(toolbar);
+				toolbar.style.display = "none";
+				
+				 optionQuills.push(optQuill);
+				 let range = optQuill.getSelection();
+				 optQuill.root.dataset.placeholder = `Write option ${i} here`;
+				  setOnFocus(optQuill, toolbar);
+				
 
-function renderWork(work, editorElm, content){
-	//console.log(JSON.stringify(work));
-	 setStudentWork(work);
-	 work.lpii = undefined;
-	 studentWorks[work.studentId] = work;
-	 currentStudent = work.studentId;
-	editorElm.id = "std"+key(work.studentId);
-	editorElm.classList.add("editor");
-	  const quill = new Quill(editorElm, {
-		theme: 'snow',
-		modules: {
-		  toolbar: false,
-		  syntax: {
-			highlight: text =>  hljs.highlightAuto(text).value
-		  },
+				   
+				 //quill.insertEmbed(range.index, 'checkbox', false);
+				 // the radio button above should be  added at the point of collective insertion to the main editor
+			
+			});
+		
+			optionQuills[0].focus(); //focus the header
+			
+			let btns = `<button class="insert">Insert</button><button class="cancel">Cancel</button>`;
+			let btnGroup = document.createElement("div");
+			btnGroup.classList.add("btn-group");
+			btnGroup.innerHTML = btns;
+			optionsContainer.append(btnGroup);
+			let insertBtn = btnGroup.querySelector(".insert");
+			let cancelBtn = btnGroup.querySelector(".cancel");
+			
+			insertBtn.onclick = e =>{
+				inputModel.push(undefined);
+				let index = inputModel.length - 1;
+				let options = optionQuills.map(q=>q.root.innerHTML);
+				quill.focus();
+				let range = quill.getSelection();
+				quill.insertEmbed(range.index, 'radiogroup', {index, options});
+				cancelBtn.click();
+			}
+			
+			cancelBtn.onclick = e =>{
+				optionQuills = null;
+				optionsContainer.innerHTML = "";
+				optionsContainer.classList.add("inactive");
+				//let mainEditorDisp = editor.style.display;
+				editor.style.display = mainEditorDisp;
+				editorCard.prepend(mainToolbar);
+				let optionToolbars = document.querySelectorAll(".option-toolbar");
+				Array.from(optionToolbars).forEach(tb=>tb.remove());
+			}
+			
+          },
 		  
-		},
-		placeholder: 'Start writing something extraordinary…',
-	  } );
-	 // console.log(JSON.stringify(work));
-	 
-	   quill.setContents(content);
-	quill.disable();
-}
+          checkbox: function (value){
+			let range = this.quill.getSelection();
+			this.quill.insertEmbed(range.index, 'checkbox', false);
+          },
+		  inlinefield: function (value){
+			let range = this.quill.getSelection();
+			this.quill.insertEmbed(range.index, 'inlinefield', value);
+			
+          },
+		  multiline: function (value){
+			let range = this.quill.getSelection();
+			this.quill.insertEmbed(range.index, 'multiline', "");
+			
+          },
+          video: async function(value){
+			let url = await promptYouTubeURL();
+			
+            let range = this.quill.getSelection(true);
+            this.quill.insertText(range.index, '\n', Quill.sources.USER);
+            //let url="https://www.youtube.com/embed/Y8Tko2YC5hA?si=pzX4QqqSKgJyK7N_" 
+			
+            this.quill.insertEmbed(range.index + 1, 'video', url, Quill.sources.USER);
+            this.quill.formatText(range.index + 1, 1, { height: '170', width: '400' });
+            this.quill.setSelection(range.index + 2, Quill.sources.SILENT);
+			  this.quill.focus();
+          }
+        }
+		
+	
+
+  const mainToolbar = createToolbar("toolbar", `
+		<span class="ql-formats">
+			<select class="ql-radiogroup">
+				<option selected>Radio Options</option>
+				<option value ="4">4 Options Group</option>
+				<option value ="3">3 Options Group</option>
+				<option value ="2">3 Options Group</option>
+				<option value ="5">5 Options Group</option>
+				
+			</select>
+       </span>`);
+  
+  const editorCard = document.querySelector(".editor-card");
+  editorCard.prepend(mainToolbar);
+  const quill = new Quill('#editor', {
+    theme: 'snow',
+	toolbar: mainToolbar,
+    modules: {
+      toolbar: {
+        container: mainToolbar,
+        handlers
+      },
+      syntax: {
+        highlight: text =>  hljs.highlightAuto(text).value
+      },
+      
+    },
+    placeholder: 'Start writing something extraordinary…',
+  } );
+//quill.disable();
   // ── Stats ───────────────────────────────────────────────────
   function updateStats() {
-    
   }
 
- 
+  // ── Selection info ──────────────────────────────────────────
+  quill.on('selection-change', (range) => {
+    const el = document.getElementById('sel-info');
+    if (range && range.length > 0) {
+      el.textContent = `${range.length} chars selected`;
+    } else {
+      el.textContent = 'No selection';
+    }
+  });
+
+  quill.on('text-change', () => {
+    updateStats();
+  });
+
+  updateStats();
 
   // ── Toast ───────────────────────────────────────────────────
   function showToast(msg, type = 'info') {
@@ -331,20 +406,42 @@ function renderWork(work, editorElm, content){
   }
 
   // ── Save draft ──────────────────────────────────────────────
-  async function saveContent() {
-	let model = getInputModel();
-	studentWork.inputs =  model;
-    
+  function saveContent() {
+    const delta = JSON.stringify(quill.getContents());
     try {
-	  await setDoc(stdProgressRef, studentWork);
-      showToast('✓ Work saved', 'success');
+    getToken()
+    .then(t=>{
+      
+      updateFileContent(fileId, quill.getContents(), t)
+	  .then(e=>{
+		localStorage.setItem('quill-draft', delta);
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('last-saved').textContent = `Saved at ${now}`;
+      showToast('✓ Draft saved to local storage', 'success');
+	  })
+            
+
+    });
     
     } catch(e) {
-      showToast('Could not save — try again', 'info');
+      showToast('Could not save — storage unavailable', 'info');
     }
   }
 
+  // Load saved draft on boot
   
+  try {
+    token.then(t=>{
+      getFileContent(fileId, t)
+      .then(content=>{
+	  console.log(JSON.stringify(content));
+       quill.setContents(content);
+      showToast('Draft restored from last session', 'info');
+
+      });
+    })
+    
+  } catch(e) {}
 
   // ── Clear ───────────────────────────────────────────────────
   function clearEditor() {
@@ -353,12 +450,192 @@ function renderWork(work, editorElm, content){
     showToast('Editor cleared', 'info');
   }
 
-  
+  // ── Copy HTML ───────────────────────────────────────────────
+  function copyHTML() {
+    const html = document.querySelector('.ql-editor').innerHTML;
+    navigator.clipboard.writeText(html)
+      .then(() => showToast('✓ HTML copied to clipboard', 'success'))
+      .catch(() => showToast('Copy failed — try manually', 'info'));
+  }
 
-  
-  
-  
+  // ── Export HTML ─────────────────────────────────────────────
+  function downloadHTML() {
+    const body  = document.querySelector('.ql-editor').innerHTML;
+    const html  = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quill Export</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/atom-one-dark.min.css">
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 60px auto; padding: 0 24px; line-height: 1.8; color: #222; }
+  pre  { background: #1a1823; color: #abb2bf; padding: 18px; border-radius: 8px; overflow-x: auto; }
+  code { background: #f0ecff; padding: 1px 5px; border-radius: 3px; }
+  blockquote { border-left: 3px solid #c9a84c; padding: 12px 18px; margin: 16px 0; color: #666; }
+</style>
+</head>
+<body>${body}</body>
+</html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'quill-export.html';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('✓ Exported as HTML', 'success');
+  }
 
+  // ── Keyboard shortcuts ──────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      saveContent();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'X') {
+      e.preventDefault();
+      clearEditor();
+    }
+  });
+  
+  
+  
+quill.root.addEventListener('keydown', (event) => {
+	 //event.preventDefault()
+	// event.stopPropagation();
+
+	return;
+  // Check if you are typing inside a specific input/textarea context
+  if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault(); // Overwrites Quill/Browser save shortcut
+    console.log('Save intercepted!');
+  }
+});
+
+
+
+
+
+function promptYouTubeURL() {
+  return new Promise((resolve) => {
+    // ===== Overlay =====
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0,0,0,0.6)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = 9999;
+
+    // ===== Modal =====
+    const modal = document.createElement('div');
+    modal.style.width = '420px';
+    modal.style.background = '#fff';
+    modal.style.borderRadius = '12px';
+    modal.style.padding = '20px';
+    modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+    modal.style.fontFamily = 'Arial, sans-serif';
+
+    // ===== Title =====
+    const title = document.createElement('h3');
+    title.innerText = 'Insert YouTube Video';
+    title.style.margin = '0 0 10px 0';
+
+    // ===== Description =====
+    const desc = document.createElement('p');
+    desc.innerText = 'Paste a YouTube video URL below:';
+    desc.style.fontSize = '13px';
+    desc.style.color = '#555';
+
+    // ===== Input =====
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'https://youtube.com/watch?v=...';
+    input.style.width = '100%';
+    input.style.padding = '10px';
+    input.style.marginTop = '10px';
+    input.style.border = '1px solid #ccc';
+    input.style.borderRadius = '6px';
+    input.style.outline = 'none';
+
+    // ===== Button Row =====
+    const btnRow = document.createElement('div');
+    btnRow.style.display = 'flex';
+    btnRow.style.justifyContent = 'flex-end';
+    btnRow.style.gap = '10px';
+    btnRow.style.marginTop = '15px';
+
+    // ===== Cancel Button =====
+    const cancelBtn = document.createElement('button');
+    cancelBtn.innerText = 'Cancel';
+    cancelBtn.style.padding = '8px 12px';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.borderRadius = '6px';
+    cancelBtn.style.cursor = 'pointer';
+    cancelBtn.style.background = '#eee';
+
+    // ===== Insert Button =====
+    const insertBtn = document.createElement('button');
+    insertBtn.innerText = 'Insert';
+    insertBtn.style.padding = '8px 12px';
+    insertBtn.style.border = 'none';
+    insertBtn.style.borderRadius = '6px';
+    insertBtn.style.cursor = 'pointer';
+    insertBtn.style.background = '#2d6cdf';
+    insertBtn.style.color = '#fff';
+
+    // ===== Validation =====
+    function isValidYouTube(url) {
+      return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/.test(url);
+    }
+
+    // ===== Cleanup =====
+    function close(value) {
+      document.body.removeChild(overlay);
+      resolve(value);
+    }
+
+    // ===== Events =====
+    cancelBtn.onclick = () => close(null);
+
+    insertBtn.onclick = () => {
+      const value = input.value.trim();
+
+      if (!value || !isValidYouTube(value)) {
+        input.style.border = '1px solid red';
+        return;
+      }
+
+      close(value);
+    };
+
+    // ESC key support
+    window.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') {
+        window.removeEventListener('keydown', esc);
+        close(null);
+      }
+    });
+
+    // ===== Build UI =====
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(insertBtn);
+
+    modal.appendChild(title);
+    modal.appendChild(desc);
+    modal.appendChild(input);
+    modal.appendChild(btnRow);
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    input.focus();
+  });
+}
 
 async function getFileContent(fileId, accessToken) {
     if (!fileId) {
@@ -386,8 +663,56 @@ async function getFileContent(fileId, accessToken) {
         return text;
     }
 }
+  async function updateFileContent(fileId, content, accessToken) {
+    if (!fileId) {
+        throw new Error("Missing file ID");
+    }
+
+    const boundary = "----drive_boundary_" + Date.now();
+
+    const metadata = {
+        mimeType: "application/json"
+    };
+
+    const body = [
+        `--${boundary}`,
+        "Content-Type: application/json; charset=UTF-8",
+        "",
+        JSON.stringify(metadata),
+        `--${boundary}`,
+        "Content-Type: application/json",
+        "",
+        JSON.stringify(content),
+        `--${boundary}--`
+    ].join("\r\n");
+
+    const res = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&supportsAllDrives=true`,
+        {
+            method: "PATCH",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": `multipart/related; boundary=${boundary}`
+            },
+            body
+        }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(
+            data.error?.message || JSON.stringify(data)
+        );
+    }
+
+    return data;
+}
   
   
+  
+
+
 /**
  * Fetch new token from server
  */
@@ -418,63 +743,6 @@ async function updateToken() {
     }
 }
 
-saveWork.onclick = async e=>{
-  await saveWorks(works);
-  showToast("Marking saved.", "success");
-}
-
-async function saveWorks(works=works){
-	works.forEach(w=>{
-		w.inputs.forEach((_, i)=>{
-			w.marks[i] ??=null;
-		})
-		batch.set(w.ref, w, {merge: true});
-	});
-	await batch.commit();
-	renewBatch();
-}
-
-submitWork.onclick = async e=>{
-  let validReturn = true;
-  works.forEach(w=>{
-	console.log(w.studentId, ":", w.marks);
-	//here make sure every std input is attended to
-	let stdInputs = w.inputs;
-	
-	stdInputs.forEach((inp, i)=>{
-		if (!validReturn) return;
-		if (!w.marks[i]) {
-			validReturn = false;
-			console.log(w.studentId, i, w.marks, inp); 
-			let inpContainer = document.querySelector(`.std-${key(w.studentId)}.index-${i}`);
-			inpContainer.scrollIntoView({ behavior: "smooth", block: "center", inline:"center"});
-			showToast("Please mark all answers!", "warning");
-		}
-	});
-	
-  });
-  let submStatRef = doc(db, schoolId, "db", "submission_stat", key(`${stdCourse.session}_${stdCourse.term}_${stdCourse.program}_${stdCourse.class}_${stdCourse.course}`))
-  if (validReturn){
-		try {
-			works.forEach(w=>{
-				w.marked = true;
-				batch.set(w.ref, w, {merge: true});
-				batch.set(submStatRef, {
-				   [module]: {
-						[lesson]: {markedCount: increment(1)}
-					}
-			  }, {merge: true});
-			 });
-			await batch.commit();
-			showToast("Markings successfully returned", "success");
-		} catch(e){
-			works.forEach(w=>w.marked = false);
-			showToast("Markings return failed. Try again.", "info");
-		}
-	 }
-  
-}
-
 /**
  * Get valid token (auto-refresh if expired or missing)
  */
@@ -490,10 +758,6 @@ async function getToken() {
 
     return await updateToken();
 }
-
-function key(token){
-      return token.replaceAll(" ","").replaceAll("/", "").replaceAll(",", "").trim();
-    }
 </script>
 </body>
 </html>
