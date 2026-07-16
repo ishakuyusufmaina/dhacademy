@@ -86,9 +86,7 @@ class InlinefieldBlot extends Embed {
 			 input.style.width = (input.value.length + 4) + "ch";
 		})
 
-		input.addEventListener("input", e=>{
-			 input.style.width = (input.value.length + 4) + "ch";
-		})
+		
 		
 
         node.appendChild(input);
