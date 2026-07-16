@@ -66,7 +66,8 @@ class InlinefieldBlot extends Embed {
         //input.value = value?.value || '';
         input.placeholder = value?.placeholder || '';
 		input.value = model[index];
-		input.style.width = input.value.length + "ch";
+		//input.style.width = input.value.length + "ch";
+		input.style.width = (input.value.length + 4) + "ch";
 		
 		let stdWork = getStudentWork();
 		if (stdWork.submitted){
@@ -82,7 +83,7 @@ class InlinefieldBlot extends Embed {
 		}
 		input.addEventListener("change", e=>{
 			 model[index] = input.value;
-			 input.style.width = input.value.length + "ch";
+			 input.style.width = (input.value.length + 4) + "ch";
 		})
 		
 
